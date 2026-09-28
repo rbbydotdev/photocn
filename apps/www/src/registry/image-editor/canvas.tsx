@@ -1,7 +1,15 @@
 "use client";
 
-import { useState, type DragEvent, type ReactNode } from "react";
-import { AlertCircleIcon, ImagePlusIcon, Loader2Icon } from "lucide-react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type DragEvent,
+  type PointerEvent,
+  type ReactNode,
+} from "react";
+import { AlertCircleIcon, ImagePlusIcon, Loader2Icon, Maximize2Icon } from "lucide-react";
 import { errorMessage, useImageEditor } from "photocn/react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -9,8 +17,14 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 import { BlurCenterOverlay } from "./blur-center-overlay";
-import { EditorCropWorkspace } from "./crop-workspace";
-import { PerspectiveOverlay } from "./perspective-overlay";
+import {
+  CornerHandlesOverlay,
+  CropFrameOverlay,
+  fitView,
+  rectToStage,
+  type StageSize,
+  type StageView,
+} from "./crop-overlay";
 
 export interface ImageEditorCanvasProps {
   className?: string;
@@ -22,14 +36,20 @@ export interface ImageEditorCanvasProps {
   showOpenButton?: boolean;
   /** Replace the empty state (no image loaded yet). */
   emptyState?: ReactNode;
-  /** Extra layers rendered above the image (e.g. your own overlays). */
+  /** Space (px) kept around the image. Default 24. */
+  padding?: number;
+  /** Extra layers rendered above the image, positioned over it. */
   children?: ReactNode;
 }
 
+type UserView = { scale: number; x: number; y: number };
+const IDENTITY_VIEW: UserView = { scale: 1, x: 0, y: 0 };
+
 /**
- * The image stage: GPU preview, pan/zoom (scroll, pinch), crop drawing in
- * the "compose" tool, blur focus in "blur", perspective handles, and
- * press-and-hold to compare with the original.
+ * The image stage. In the crop tool it shows the whole image dimmed around
+ * the crop frame (drag handles, move, zoom, perspective corners); in every
+ * other tool it shows the result, with pinch/⌘-scroll zoom, blur focus and
+ * press-and-hold to compare.
  */
 export function ImageEditorCanvas({
   className,
@@ -37,21 +57,109 @@ export function ImageEditorCanvas({
   allowDrop = true,
   showOpenButton = true,
   emptyState,
+  padding = 24,
   children,
 }: ImageEditorCanvasProps) {
   const editor = useImageEditor();
+  const { geometry } = editor;
+  const [stage, setStage] = useState<StageSize | null>(null);
+  const [frozenView, setFrozenView] = useState<StageView | null>(null);
+  const [userView, setUserView] = useState<UserView>(IDENTITY_VIEW);
   const [isDragOver, setIsDragOver] = useState(false);
-  const isCompose = editor.tool === "compose";
+  const stageRef = editor.stageRef;
+
+  const isCropView = geometry.view === "full";
+  const isCorners = geometry.editingCorners;
   const isBlur = editor.tool === "blur";
-  const { crop, perspective } = editor;
-  const canEditCrop = isCompose && !perspective.isEditing;
+
+  // Measure the stage.
+  useLayoutEffect(() => {
+    const element = stageRef.current;
+    if (!element) return;
+    const observer = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect;
+      setStage((prev) =>
+        prev && prev.width === width && prev.height === height ? prev : { width, height },
+      );
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [stageRef, editor.imageSrc]);
+
+  // A new image, or switching between crop and result, starts un-zoomed.
+  const viewKey = `${editor.imageSrc}|${geometry.view}`;
+  const [trackedKey, setTrackedKey] = useState(viewKey);
+  if (viewKey !== trackedKey) {
+    setTrackedKey(viewKey);
+    setUserView(IDENTITY_VIEW);
+    setFrozenView(null);
+  }
+
+  const oriented = geometry.orientedSize;
+  let view: StageView | null = null;
+  if (stage && oriented) {
+    if (frozenView) {
+      view = frozenView;
+    } else if (isCropView) {
+      // The frame stays put: fit the crop (or, while dragging corners, the
+      // whole image) and let the image move and zoom under it.
+      view = fitView(isCorners ? geometry.bounds : geometry.crop, oriented, stage, padding * 1.5);
+    } else {
+      const fit = fitView(geometry.displayRect, oriented, stage, padding);
+      view = {
+        k: fit.k * userView.scale,
+        ox: fit.ox * userView.scale + userView.x,
+        oy: fit.oy * userView.scale + userView.y,
+      };
+    }
+  }
+  const canvasBox = view && oriented ? rectToStage(view, oriented, geometry.displayRect) : null;
+
+  // ⌘/Ctrl-scroll or pinch zooms the result; plain scroll pans once zoomed.
+  const zoomRef = useRef<(event: WheelEvent) => void>(() => {});
+  zoomRef.current = (event: WheelEvent) => {
+    if (isCropView || !stage) return;
+    const zooming = event.ctrlKey || event.metaKey;
+    if (!zooming && userView.scale === 1) return;
+    event.preventDefault();
+    const rect = stageRef.current!.getBoundingClientRect();
+    const cx = event.clientX - rect.left;
+    const cy = event.clientY - rect.top;
+    setUserView((prev) => {
+      if (!zooming) return { ...prev, x: prev.x - event.deltaX, y: prev.y - event.deltaY };
+      const scale = Math.min(8, Math.max(1, prev.scale * Math.exp(-event.deltaY * 0.01)));
+      const f = scale / prev.scale;
+      if (scale === 1) return IDENTITY_VIEW;
+      return { scale, x: cx - (cx - prev.x) * f, y: cy - (cy - prev.y) * f };
+    });
+  };
+  useEffect(() => {
+    const element = stageRef.current;
+    if (!element) return;
+    const onWheel = (event: WheelEvent) => zoomRef.current(event);
+    element.addEventListener("wheel", onWheel, { passive: false });
+    return () => element.removeEventListener("wheel", onWheel);
+  }, [stageRef, editor.imageSrc]);
+
+  // Press and hold the result to see the original.
+  const comparePointer = useRef<number | null>(null);
+  const canCompare = !isCropView && !isBlur && !editor.disabled;
+  const onStagePointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    if (!canCompare || (event.pointerType === "mouse" && event.button !== 0)) return;
+    comparePointer.current = event.pointerId;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    editor.compare.setActive(true);
+  };
+  const endCompare = (event: PointerEvent<HTMLDivElement>) => {
+    if (comparePointer.current !== event.pointerId) return;
+    comparePointer.current = null;
+    editor.compare.setActive(false);
+  };
 
   const dropProps = allowDrop
     ? {
         onDragOver: (event: DragEvent) => {
-          if (!Array.from(event.dataTransfer.items).some((item) => item.kind === "file")) {
-            return;
-          }
+          if (!Array.from(event.dataTransfer.items).some((item) => item.kind === "file")) return;
           event.preventDefault();
           setIsDragOver(true);
         },
@@ -73,63 +181,88 @@ export function ImageEditorCanvas({
       className={cn("relative h-full min-h-0", className)}
       data-drag-over={isDragOver || undefined}
       data-slot="image-editor-canvas"
+      data-view={isCropView ? "crop" : "result"}
       {...dropProps}
     >
       {editor.imageSrc ? (
-        <EditorCropWorkspace
-          alt={alt}
-          aspectRatio={crop.aspectRatioValue}
-          className="h-full rounded-md border shadow-sm"
-          crop={crop.rect}
-          disabled={editor.disabled}
-          onComparePressedChange={isCompose ? undefined : editor.compare.setActive}
-          onCropChange={canEditCrop ? crop.update : undefined}
-          onCropCommit={canEditCrop ? crop.commitDrag : undefined}
-          preview={
-            <div className="absolute inset-0">
-              {/* A fresh <canvas> per image: transferControlToOffscreen is one-shot. */}
-              <canvas
-                aria-label={alt}
-                className="pointer-events-none absolute inset-0 block size-full select-none object-contain"
-                key={editor.imageSrc}
-                ref={editor.canvasRef}
-              />
-              {!editor.isReady && editor.status !== "error" ? (
-                <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                  <Loader2Icon className="size-5 animate-spin text-muted-foreground" />
-                </div>
-              ) : null}
-              {isBlur && editor.imageSize ? (
+        <div
+          className={cn(
+            "relative size-full touch-none overflow-hidden rounded-md border bg-muted/40 select-none",
+            "bg-[conic-gradient(var(--muted)_25%,transparent_0_50%,var(--muted)_0_75%,transparent_0)] bg-[length:16px_16px]",
+          )}
+          data-slot="image-editor-stage"
+          onPointerCancel={endCompare}
+          onPointerDown={onStagePointerDown}
+          onPointerUp={endCompare}
+          ref={stageRef}
+        >
+          {/* One <canvas> for the image's lifetime: transferControlToOffscreen is one-shot. */}
+          <canvas
+            aria-label={alt}
+            className="pointer-events-none absolute block"
+            key={editor.imageSrc}
+            ref={editor.canvasRef}
+            role="img"
+            style={
+              canvasBox
+                ? { left: canvasBox.left, top: canvasBox.top, width: canvasBox.width, height: canvasBox.height }
+                : { visibility: "hidden" }
+            }
+          />
+          {!editor.isReady && editor.status !== "error" ? (
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+              <Loader2Icon className="size-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : null}
+          {view && stage && isCropView && !isCorners ? (
+            <CropFrameOverlay
+              disabled={editor.disabled}
+              geometry={geometry}
+              onFreezeView={setFrozenView}
+              stage={stage}
+              view={view}
+            />
+          ) : null}
+          {view && stage && isCropView && isCorners ? (
+            <CornerHandlesOverlay
+              disabled={editor.disabled}
+              geometry={geometry}
+              onFreezeView={setFrozenView}
+              stage={stage}
+              view={view}
+            />
+          ) : null}
+          {canvasBox && !isCropView ? (
+            <div className="pointer-events-none absolute" style={canvasBox}>
+              {isBlur ? (
                 <BlurCenterOverlay
                   centerX={editor.blur.value.centerX}
                   centerY={editor.blur.value.centerY}
+                  className="pointer-events-auto"
                   disabled={editor.disabled}
                   onCenterChange={editor.blur.setCenter}
                   onCenterCommit={editor.blur.commitCenter}
                 />
               ) : null}
-              {isCompose && perspective.isEditing && editor.imageSize ? (
-                <PerspectiveOverlay
-                  disabled={editor.disabled}
-                  imageHeight={editor.imageSize.height}
-                  imageWidth={editor.imageSize.width}
-                  onQuadChange={perspective.change}
-                  onQuadCommit={perspective.commit}
-                  quad={perspective.quad}
-                />
-              ) : null}
               {children}
             </div>
-          }
-          showCropOverlay={canEditCrop && crop.isDrawn}
-          src={editor.imageSrc}
-          stageRef={editor.stageRef}
-          transform={editor.view}
-        />
+          ) : null}
+          {!isCropView && userView !== IDENTITY_VIEW ? (
+            <Button
+              aria-label="Fit to screen"
+              className="absolute right-2 bottom-2"
+              onClick={() => setUserView(IDENTITY_VIEW)}
+              onPointerDown={(event) => event.stopPropagation()}
+              size="icon-sm"
+              type="button"
+              variant="secondary"
+            >
+              <Maximize2Icon />
+            </Button>
+          ) : null}
+        </div>
       ) : (
-        (emptyState ?? (
-          <ImageEditorEmptyState showOpenButton={showOpenButton} />
-        ))
+        (emptyState ?? <ImageEditorEmptyState showOpenButton={showOpenButton} />)
       )}
       {isDragOver ? (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-md border-2 border-dashed border-primary bg-primary/5 text-sm font-medium text-primary">

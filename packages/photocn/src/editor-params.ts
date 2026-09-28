@@ -1,16 +1,7 @@
-import type { PerspectiveQuad } from "./perspective-geometry";
+import { createGeometry, type GeometryParams, type Size } from "./compose";
 
 export interface SkippableSection {
   $skip?: boolean;
-}
-
-export interface TransformParams {
-  translateX: number;
-  translateY: number;
-  angle: number;
-  scale: number;
-  flipv: number | boolean;
-  fliph: number | boolean;
 }
 
 export interface CropBox {
@@ -30,23 +21,6 @@ export interface EditorCropRect {
   y: number;
   width: number;
   height: number;
-}
-
-export interface CropParams {
-  /**
-   * The user's current draft crop. Polymorphic across editor eras: the
-   * shadcn workbench writes `EditorCropRect` (stage-percent), the legacy
-   * `packages/core` cropper writes a DOMRect-shaped object. Each consumer
-   * narrows on read; `0` means "no crop drawn yet" in both worlds.
-   */
-  currentcrop: unknown;
-  /** One-shot trigger: when set, the next render applies this crop to the renderer. */
-  glcrop: CropBox | 0;
-  /** Persistent applied-crop state. The render pipeline reconciles the renderer's cropped texture with this on each render, so undo/redo can revert a crop. */
-  appliedCrop: CropBox | 0;
-  canvas_angle: number;
-  ar: number;
-  arindex: number;
 }
 
 export interface LightParams extends SkippableSection {
@@ -106,25 +80,9 @@ export interface FilterParams extends SkippableSection {
   mix: number;
 }
 
-export interface PerspectiveParams {
-  quad: PerspectiveQuad | 0;
-  modified: number;
-}
-
-export interface Perspective2Params {
-  before: PerspectiveQuad | 0;
-  after: PerspectiveQuad | 0;
-  modified: number;
-}
-
 export interface BlenderParams extends SkippableSection {
   blendmap: CanvasImageSource | 0;
   blendmix: number;
-}
-
-export interface ResizerParams {
-  width: number;
-  height: number;
 }
 
 export interface BlurParams extends SkippableSection {
@@ -136,56 +94,43 @@ export interface BlurParams extends SkippableSection {
   centerY: number;
 }
 
+/**
+ * Geometry plus render-only hints. `$view` and `$outputSize` are set on the
+ * params handed to the renderer (crop-tool view, export resize) and never
+ * stored in history or recipes.
+ */
+export interface GeometrySection extends GeometryParams {
+  $view?: "crop" | "full";
+  $outputSize?: Size | null;
+}
+
 export interface EditorParams {
-  trs: TransformParams;
-  crop: CropParams;
+  geometry: GeometrySection;
   lights: LightParams;
   colors: ColorParams;
   effects: EffectParams;
   curve: CurveParams;
   filters: FilterParams;
-  perspective: PerspectiveParams;
-  perspective2: Perspective2Params;
   blender: BlenderParams;
-  resizer: ResizerParams;
   blur: BlurParams;
 }
 
 export type EditorParamSection = keyof EditorParams;
 
 export const editorParamSections = [
-  "trs",
-  "crop",
+  "geometry",
   "lights",
   "colors",
   "effects",
   "curve",
   "filters",
-  "perspective",
-  "perspective2",
   "blender",
-  "resizer",
   "blur",
 ] as const satisfies readonly EditorParamSection[];
 
 export function createEditorParams(): EditorParams {
   return {
-    trs: {
-      translateX: 0,
-      translateY: 0,
-      angle: 0,
-      scale: 0,
-      flipv: 0,
-      fliph: 0,
-    },
-    crop: {
-      currentcrop: 0,
-      glcrop: 0,
-      appliedCrop: 0,
-      canvas_angle: 0,
-      ar: 0,
-      arindex: 0,
-    },
+    geometry: createGeometry(),
     lights: {
       brightness: 0,
       exposure: 0,
@@ -214,22 +159,9 @@ export function createEditorParams(): EditorParams {
       opt: 0,
       mix: 0,
     },
-    perspective: {
-      quad: 0,
-      modified: 0,
-    },
-    perspective2: {
-      before: 0,
-      after: 0,
-      modified: 0,
-    },
     blender: {
       blendmap: 0,
       blendmix: 0.5,
-    },
-    resizer: {
-      width: 0,
-      height: 0,
     },
     blur: {
       bokehstrength: 0,

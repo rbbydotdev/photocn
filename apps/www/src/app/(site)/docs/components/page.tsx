@@ -18,7 +18,7 @@ const exportsByItem: Record<string, string[]> = {
   "image-editor-filters": ["ImageEditorFilters", "FiltersPanel"],
   "image-editor-curves": ["ImageEditorCurves", "CurvesPanel"],
   "image-editor-blur": ["ImageEditorBlur", "BlurPanel"],
-  "image-editor-crop": ["ImageEditorCrop", "CompositionPanel"],
+  "image-editor-crop": ["ImageEditorCrop", "CropPanel"],
   "image-editor-blend": ["ImageEditorBlend", "BlenderPanel"],
   "image-editor-metadata": ["ImageEditorMetadata", "MetadataPanel"],
   "image-editor-export": ["ImageEditorExportDialog"],

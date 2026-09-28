@@ -18,11 +18,8 @@ function createMockRenderer(width = 800, height = 600): EditorRenderer {
     img: stubImage,
     gl: { canvas: { width, height } },
     loadImage: vi.fn<(image?: LoadableImage) => void>(),
-    resetCrop: vi.fn(),
     readPixels: vi.fn(() => new Uint8Array(width * height * 4)),
-    filterMatrix: vi.fn(),
-    filterPerspective: vi.fn(),
-    crop: vi.fn(),
+    loadGeometry: vi.fn(),
     filterBlend: vi.fn(),
     filterAdjustments: vi.fn(),
     filterBloom: vi.fn(),
@@ -86,7 +83,7 @@ describe("useRenderPipeline", () => {
   });
 
   describe("render()", () => {
-    it("invokes loadImage, paintCanvas, and filterAdjustments with default params", () => {
+    it("invokes loadGeometry, paintCanvas, and filterAdjustments with default params", () => {
       const renderer = createMockRenderer();
       const { result } = renderHook(() =>
         useRenderPipeline({ renderer, params: createEditorParams() }),
@@ -96,7 +93,7 @@ describe("useRenderPipeline", () => {
         result.current.render();
       });
 
-      expect(renderer.loadImage).toHaveBeenCalled();
+      expect(renderer.loadGeometry).toHaveBeenCalled();
       expect(renderer.paintCanvas).toHaveBeenCalled();
       expect(renderer.filterAdjustments).toHaveBeenCalledTimes(1);
     });
@@ -111,7 +108,7 @@ describe("useRenderPipeline", () => {
         result.current.render();
       });
 
-      expect(renderer.loadImage).not.toHaveBeenCalled();
+      expect(renderer.loadGeometry).not.toHaveBeenCalled();
       expect(renderer.paintCanvas).not.toHaveBeenCalled();
     });
 
@@ -225,7 +222,7 @@ describe("useRenderPipeline", () => {
         }),
       );
 
-      expect(renderer.loadImage).toHaveBeenCalledTimes(1);
+      expect(renderer.loadGeometry).toHaveBeenCalledTimes(1);
       expect(renderer.paintCanvas).toHaveBeenCalledTimes(1);
     });
 
@@ -235,7 +232,7 @@ describe("useRenderPipeline", () => {
         useRenderPipeline({ renderer, params: createEditorParams() }),
       );
 
-      expect(renderer.loadImage).not.toHaveBeenCalled();
+      expect(renderer.loadGeometry).not.toHaveBeenCalled();
       expect(renderer.paintCanvas).not.toHaveBeenCalled();
     });
   });

@@ -1,4 +1,4 @@
-import type { CurveChannels, EditorCropRect } from "../editor-params";
+import type { CurveChannels } from "../editor-params";
 
 /**
  * Tools the built-in editor knows how to show. Custom UIs are free to ignore
@@ -127,48 +127,24 @@ export interface BlendValue {
   blendMix: number;
 }
 
-export interface CropTransformValue {
-  /** Degrees, -180..180. */
-  rotation: number;
-  /** Percent, 100 = fit. */
-  scale: number;
-  flipHorizontal: boolean;
-  flipVertical: boolean;
-}
-
-export interface ResizeValue {
-  width: number;
-  height: number;
-  originalWidth: number;
-  originalHeight: number;
-}
-
-export interface ResizeChange {
-  width: number;
-  height: number;
-  /** Keep the image aspect ratio; the untouched edge is derived. */
-  locked: boolean;
-}
-
 export interface AspectRatioOption {
   value: string;
   label: string;
 }
 
+/**
+ * Crop ratio presets. Ratios are written landscape-first; the editor applies
+ * them in the crop's current orientation and the portrait/landscape toggle
+ * flips them (a "4:3" preset on a portrait crop is 3:4).
+ */
 export const aspectRatioOptions = [
-  { value: "free", label: "Free" },
+  { value: "free", label: "Freeform" },
   { value: "original", label: "Original" },
-  { value: "1:1", label: "1:1" },
-  { value: "4:5", label: "4:5" },
+  { value: "1:1", label: "Square" },
   { value: "16:9", label: "16:9" },
+  { value: "5:4", label: "5:4" },
+  { value: "4:3", label: "4:3" },
+  { value: "3:2", label: "3:2" },
 ] as const satisfies readonly AspectRatioOption[];
 
-export type { CurveChannels, EditorCropRect };
-
-/** Crop rectangle in stage-percent coordinates (0..100 on both axes). */
-export type CropRect = EditorCropRect;
-
-export interface ViewTransform {
-  zoom: number;
-  rotation: number;
-}
+export type { CurveChannels };

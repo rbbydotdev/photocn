@@ -14,10 +14,18 @@ describe("createEditorParams", () => {
     }
   });
 
-  it("returns zeroed transform/crop and centered blur defaults", () => {
+  it("returns identity geometry and centered blur defaults", () => {
     const params = createEditorParams();
-    expect(params.trs).toMatchObject({ angle: 0, scale: 0, fliph: 0, flipv: 0 });
-    expect(params.crop).toMatchObject({ glcrop: 0, ar: 0, arindex: 0 });
+    expect(params.geometry).toEqual({
+      quarterTurns: 0,
+      flipX: false,
+      straighten: 0,
+      perspectiveX: 0,
+      perspectiveY: 0,
+      corners: null,
+      crop: null,
+      aspectRatio: null,
+    });
     expect(params.blur).toMatchObject({
       bokehstrength: 0,
       bokehlensout: 0.5,
@@ -42,13 +50,13 @@ describe("resetEditorParams", () => {
     const params = createEditorParams();
     params.lights.exposure = 0.7;
     params.colors.saturation = -0.3;
-    params.crop.glcrop = { left: 1, top: 1, width: 10, height: 10 };
+    params.geometry.straighten = 12;
 
     resetEditorParams(params);
 
     expect(params.lights.exposure).toBe(0);
     expect(params.colors.saturation).toBe(0);
-    expect(params.crop.glcrop).toBe(0);
+    expect(params.geometry.straighten).toBe(0);
   });
 
   it("clears keys that are not part of the default shape", () => {
@@ -83,17 +91,13 @@ describe("setSectionSkipped", () => {
 describe("editorParamSections", () => {
   it("exposes a stable section order", () => {
     expect(editorParamSections).toEqual([
-      "trs",
-      "crop",
+      "geometry",
       "lights",
       "colors",
       "effects",
       "curve",
       "filters",
-      "perspective",
-      "perspective2",
       "blender",
-      "resizer",
       "blur",
     ]);
   });

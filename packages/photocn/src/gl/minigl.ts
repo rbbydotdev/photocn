@@ -5,6 +5,41 @@
 */
 
 import * as Filters from './minigl_filters.js'
+import {
+  composeMatrix,
+  effectiveCrop,
+  imagePolygon,
+  outputPixelSize,
+  polygonBounds,
+  type GeometryParams,
+  type Size,
+} from '../compose'
+
+/** What `loadGeometry` renders. */
+export type GeometryRenderSpec = {
+  geometry: GeometryParams
+  /** 'crop' renders the result; 'full' renders the whole warped image (crop tool). */
+  view?: 'crop' | 'full'
+  /** Exact output pixel size (export resize). Defaults to the crop at source resolution. */
+  outputSize?: Size | null
+}
+
+const geometryFragmentSource = `#version 300 es
+  precision highp float;
+  in vec2 texCoord;
+  uniform sampler2D _texture;
+  uniform mat3 uMatrix;
+  out vec4 outColor;
+  void main() {
+    vec3 p = uMatrix * vec3(texCoord, 1.0);
+    vec2 uv = p.xy / p.z;
+    if (p.z <= 0.0 || uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) {
+      outColor = vec4(0.0);
+      return;
+    }
+    outColor = texture(_texture, uv);
+  }
+`
 export {Spline} from './filters/cubicspline.js'
 
 const usesrgb=true //to guarantee gamma correct workflow, SRGB in input - processing is linear - SRGB in output
@@ -51,6 +86,8 @@ export type MiniGlRenderer = {
   appliedCrop?: CropRect
   destroy: () => void
   loadImage: () => void
+  /** Like loadImage, but samples the source through the geometry (orientation, warp, crop). */
+  loadGeometry: (spec: GeometryRenderSpec) => void
   paintCanvas: () => void
   crop: (rect: CropRect) => void
   resetCrop: () => void
@@ -98,6 +135,7 @@ export function minigl(canvas: HTMLCanvasElement, img: TextureSource, colorspace
     img,
     destroy,
     loadImage,
+    loadGeometry,
     paintCanvas,
     crop,
     resetCrop,
@@ -130,6 +168,7 @@ export function minigl(canvas: HTMLCanvasElement, img: TextureSource, colorspace
   //create default SHADER
   const defaultShader = new ShaderCtor(gl)
   const flippedShader = new ShaderCtor(gl,null,flippedFragmentSource)
+  const geometryShader = new ShaderCtor(gl,null,geometryFragmentSource)
   
   //create two effects' blank textures to handle [image-->shaderA-->txt1-->shaderB-->txt2-->canvas]
   //note: setupFiltersTextures needs to be re-run if canvas width/height change (eg when changing aspect ratio)
@@ -167,6 +206,23 @@ export function minigl(canvas: HTMLCanvasElement, img: TextureSource, colorspace
     if(croppedTexture) current_texture= croppedTexture
     else current_texture=imageTexture
     runFilter(defaultShader,null)
+  }
+
+  // Non-destructive geometry: every render samples the original bitmap
+  // through one projective matrix and sizes the canvas to the result.
+  function loadGeometry(spec: GeometryRenderSpec){
+    const source = naturalSize(img)
+    const g = spec.geometry
+    const rect = spec.view === 'full' ? polygonBounds(imagePolygon(g, source)) : effectiveCrop(g, source)
+    const size = spec.outputSize ?? outputPixelSize(g, source, rect)
+    if (gl.canvas.width !== size.width || gl.canvas.height !== size.height) {
+      gl.canvas.width = _minigl.width = size.width
+      gl.canvas.height = _minigl.height = size.height
+      setupFiltersTextures()
+    }
+    const m = composeMatrix(g, source, rect)
+    current_texture = imageTexture
+    runFilter(geometryShader, { uMatrix: [m[0], m[3], m[6], m[1], m[4], m[7], m[2], m[5], m[8]] })
   }
 
   function paintCanvas(){

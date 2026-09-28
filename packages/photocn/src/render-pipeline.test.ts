@@ -14,11 +14,8 @@ function createMockRenderer(width = 800, height = 600): EditorRenderer {
     img: stubImage,
     gl: { canvas: { width, height } },
     loadImage: vi.fn<(image?: LoadableImage) => void>(),
-    resetCrop: vi.fn(),
     readPixels: vi.fn(() => new Uint8Array(width * height * 4)),
-    filterMatrix: vi.fn(),
-    filterPerspective: vi.fn(),
-    crop: vi.fn(),
+    loadGeometry: vi.fn(),
     filterBlend: vi.fn(),
     filterAdjustments: vi.fn(),
     filterBloom: vi.fn(),
@@ -41,7 +38,7 @@ describe("renderEditorPipeline", () => {
 
   it("always loads the image and paints the canvas", () => {
     renderEditorPipeline({ renderer, params: createEditorParams() });
-    expect(renderer.loadImage).toHaveBeenCalled();
+    expect(renderer.loadGeometry).toHaveBeenCalledTimes(1);
     expect(renderer.paintCanvas).toHaveBeenCalled();
   });
 
@@ -50,45 +47,30 @@ describe("renderEditorPipeline", () => {
     expect(renderer.filterAdjustments).toHaveBeenCalledTimes(1);
   });
 
-  it("skips filterMatrix when params describe an identity transform with no crop staged", () => {
-    renderEditorPipeline({ renderer, params: createEditorParams() });
-    expect(renderer.filterMatrix).not.toHaveBeenCalled();
-  });
-
-  it("invokes filterMatrix whenever transforms differ from defaults, regardless of mode", () => {
-    const flipped = createEditorParams();
-    flipped.trs.fliph = 1;
-    const r1 = createMockRenderer();
-    renderEditorPipeline({ renderer: r1, params: flipped });
-    expect(r1.filterMatrix).toHaveBeenCalledTimes(1);
-
-    const rotated = createEditorParams();
-    rotated.trs.angle = 15;
-    const r2 = createMockRenderer();
-    renderEditorPipeline({ renderer: r2, params: rotated });
-    expect(r2.filterMatrix).toHaveBeenCalledTimes(1);
-
-    const canvasRotated = createEditorParams();
-    canvasRotated.crop.canvas_angle = 90;
-    const r3 = createMockRenderer();
-    renderEditorPipeline({ renderer: r3, params: canvasRotated });
-    expect(r3.filterMatrix).toHaveBeenCalledTimes(1);
-
-    const staged = createEditorParams();
-    staged.crop.glcrop = { left: 0, top: 0, width: 10, height: 10 };
-    const r4 = createMockRenderer();
-    renderEditorPipeline({ renderer: r4, params: staged });
-    expect(r4.filterMatrix).toHaveBeenCalled();
-  });
-
-  it("applies a glcrop and recurses without re-applying the crop", () => {
+  it("renders geometry first, from the original, with the crop view by default", () => {
+    const renderer = createMockRenderer();
     const params = createEditorParams();
-    params.crop.glcrop = { left: 10, top: 10, width: 100, height: 100 };
+    params.geometry = { ...params.geometry, straighten: 12, quarterTurns: 1 };
     renderEditorPipeline({ renderer, params });
-    expect(renderer.crop).toHaveBeenCalledTimes(1);
-    expect(params.crop.glcrop).toBe(0);
-    // After recursion, filterAdjustments runs on the cropped image too.
-    expect(renderer.filterAdjustments).toHaveBeenCalled();
+    expect(renderer.loadGeometry).toHaveBeenCalledWith({
+      geometry: expect.objectContaining({ straighten: 12, quarterTurns: 1 }),
+      view: "crop",
+      outputSize: null,
+    });
+    const geometryOrder = vi.mocked(renderer.loadGeometry).mock.invocationCallOrder[0];
+    const adjustOrder = vi.mocked(renderer.filterAdjustments).mock.invocationCallOrder[0];
+    expect(geometryOrder).toBeLessThan(adjustOrder);
+  });
+
+  it("passes render-only hints ($view, $outputSize) without leaking them into geometry", () => {
+    const renderer = createMockRenderer();
+    const params = createEditorParams();
+    params.geometry = { ...params.geometry, $view: "full", $outputSize: { width: 800, height: 600 } };
+    renderEditorPipeline({ renderer, params });
+    const spec = vi.mocked(renderer.loadGeometry).mock.calls[0][0];
+    expect(spec.view).toBe("full");
+    expect(spec.outputSize).toEqual({ width: 800, height: 600 });
+    expect(spec.geometry).not.toHaveProperty("$view");
   });
 
   it("calls filterCurves only when curvepoints are set and section is not skipped", () => {
@@ -184,75 +166,5 @@ describe("renderEditorPipeline", () => {
     const onHistogramUpdate = vi.fn();
     renderEditorPipeline({ renderer, params: createEditorParams(), onHistogramUpdate });
     expect(onHistogramUpdate).toHaveBeenCalledTimes(1);
-  });
-});
-
-describe("renderEditorPipeline appliedCrop reconciliation", () => {
-  const cropBox = { left: 100, top: 50, width: 400, height: 300 };
-
-  it("applies a crop on first render when params.crop.appliedCrop is set", () => {
-    const renderer = createMockRenderer();
-    const params = createEditorParams();
-    params.crop.appliedCrop = cropBox;
-
-    renderEditorPipeline({ renderer, params });
-
-    expect(renderer.crop).toHaveBeenCalledWith(cropBox);
-    expect(renderer.resetCrop).not.toHaveBeenCalled();
-  });
-
-  it("does NOT re-apply the crop on subsequent renders when state already matches", () => {
-    const renderer = createMockRenderer();
-    // Simulate: renderer is already cropped to this rect (e.g. from a prior render).
-    renderer.appliedCrop = cropBox;
-    const params = createEditorParams();
-    params.crop.appliedCrop = cropBox;
-
-    renderEditorPipeline({ renderer, params });
-
-    expect(renderer.crop).not.toHaveBeenCalled();
-    expect(renderer.resetCrop).not.toHaveBeenCalled();
-  });
-
-  it("calls resetCrop when params clears appliedCrop after a previous crop (the undo flow)", () => {
-    const renderer = createMockRenderer();
-    // Renderer is currently cropped (left over from a prior render).
-    renderer.appliedCrop = cropBox;
-    // Params no longer have appliedCrop set — this is what undo produces.
-    const params = createEditorParams();
-    expect(params.crop.appliedCrop).toBe(0);
-
-    renderEditorPipeline({ renderer, params });
-
-    expect(renderer.resetCrop).toHaveBeenCalledTimes(1);
-    expect(renderer.crop).not.toHaveBeenCalled();
-  });
-
-  it("reset+re-applies when changing from one crop rect to another", () => {
-    const renderer = createMockRenderer();
-    renderer.appliedCrop = cropBox;
-    const newCrop = { left: 0, top: 0, width: 200, height: 200 };
-    const params = createEditorParams();
-    params.crop.appliedCrop = newCrop;
-
-    renderEditorPipeline({ renderer, params });
-
-    expect(renderer.resetCrop).toHaveBeenCalledTimes(1);
-    expect(renderer.crop).toHaveBeenCalledWith(newCrop);
-  });
-
-  it("applies transforms before cropping so the crop rect aligns with the transformed image", () => {
-    const renderer = createMockRenderer();
-    const params = createEditorParams();
-    params.crop.appliedCrop = cropBox;
-    params.trs.angle = 30; // transformed image
-
-    renderEditorPipeline({ renderer, params });
-
-    // filterMatrix runs at least once during reconciliation (before crop) and
-    // may also run in the main pipeline. The contract that matters is that
-    // crop sees a transformed-image renderer state.
-    expect(renderer.filterMatrix).toHaveBeenCalled();
-    expect(renderer.crop).toHaveBeenCalledWith(cropBox);
   });
 });

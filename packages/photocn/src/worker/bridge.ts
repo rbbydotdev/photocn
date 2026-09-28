@@ -825,6 +825,12 @@ class ProxyRenderer {
     this.ops.push({ name: "loadImage", args: [] });
   }
 
+  loadGeometry(spec: unknown): void {
+    // Geometry is normalized, so the same op renders correctly against the
+    // proxy and the full-resolution source.
+    this.ops.push({ name: "loadGeometry", args: [spec] });
+  }
+
   resetCrop(): void {
     this.appliedCrop = undefined;
     this.ops.push({ name: "resetCrop", args: [] });

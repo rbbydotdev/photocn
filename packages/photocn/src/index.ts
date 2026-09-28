@@ -59,10 +59,35 @@ export {
 } from "./perspective-geometry";
 export { renderEditorPipeline } from "./render-pipeline";
 export {
-  cropBoxesEqual,
-  stageRectToImageRect,
-} from "./crop-projection";
-export type { StageCropRect } from "./crop-projection";
+  composeMatrix,
+  createGeometry,
+  cropForAspectRatio,
+  effectiveCrop,
+  fitRectInPolygon,
+  flipGeometry,
+  hasWarp,
+  homography,
+  imagePolygon,
+  isGeometryDefault,
+  largestRectWithRatio,
+  orientedSize,
+  outputPixelSize,
+  PERSPECTIVE_STRENGTH,
+  polygonBounds,
+  rectInsidePolygon,
+  rotateGeometry,
+  setCornerTarget,
+  sourceToCanvas,
+  STRAIGHTEN_LIMIT,
+  warpNormalized,
+} from "./compose";
+export type {
+  GeometryParams,
+  Mat3,
+  NormalizedRect,
+  Quad,
+  Vec2,
+} from "./compose";
 export { clamp } from "./util";
 
 export type {
@@ -70,7 +95,6 @@ export type {
   BlurParams,
   ColorParams,
   CropBox,
-  CropParams,
   CurveChannelPoints,
   CurveChannels,
   CurveParams,
@@ -81,12 +105,9 @@ export type {
   EffectParams,
   FilterOption,
   FilterParams,
+  GeometrySection,
   LightParams,
-  Perspective2Params,
-  PerspectiveParams,
-  ResizerParams,
   SkippableSection,
-  TransformParams,
 } from "./editor-params";
 
 export type {

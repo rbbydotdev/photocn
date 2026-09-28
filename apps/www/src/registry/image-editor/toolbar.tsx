@@ -69,7 +69,7 @@ export interface EditorToolbarProps {
 
 export const editorToolbarDefaultTools = [
   { value: "adjust", label: "Adjust", icon: SlidersHorizontalIcon },
-  { value: "compose", label: "Compose", icon: CropIcon },
+  { value: "compose", label: "Crop", icon: CropIcon },
   { value: "curves", label: "Curves", icon: ActivityIcon },
   { value: "effects", label: "Effects", icon: SparklesIcon },
   { value: "filters", label: "Filters", icon: WandSparklesIcon },

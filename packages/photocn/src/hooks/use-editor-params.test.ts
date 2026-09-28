@@ -41,7 +41,7 @@ describe("useEditorParams", () => {
       // Other sections remain at defaults.
       expect(result.current.params.colors).toEqual(before.colors);
       expect(result.current.params.effects).toEqual(before.effects);
-      expect(result.current.params.trs).toEqual(before.trs);
+      expect(result.current.params.geometry).toEqual(before.geometry);
     });
 
     it("preserves untouched fields within the same section", () => {

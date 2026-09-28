@@ -33,6 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 
@@ -82,6 +83,14 @@ export function ImageEditorExportDialog({
     exportFormats.find((option) => option.value === format) ?? exportFormats[0];
   const [quality, setQuality] = useState<number>(selected.defaultQuality);
   const [pending, setPending] = useState<"download" | "save" | null>(null);
+  // Output width in px; height follows the crop's ratio. null = full size.
+  const [width, setWidth] = useState<number | null>(null);
+  const full = editor.geometry.outputSize;
+  const output = full
+    ? width
+      ? { width, height: Math.max(1, Math.round((width * full.height) / full.width)) }
+      : full
+    : null;
   const [error, setError] = useState<unknown>(null);
 
   const canExport = editor.isReady && !editor.disabled;
@@ -90,7 +99,12 @@ export function ImageEditorExportDialog({
     setError(null);
     setPending(kind);
     try {
-      const options = { format, quality: selected.lossy ? quality : undefined };
+      const options = {
+        format,
+        quality: selected.lossy ? quality : undefined,
+        width: output && width ? output.width : undefined,
+        height: output && width ? output.height : undefined,
+      };
       if (kind === "download") {
         await editor.download(options);
       } else {
@@ -124,7 +138,7 @@ export function ImageEditorExportDialog({
         <DialogHeader>
           <DialogTitle>Export image</DialogTitle>
           <DialogDescription>
-            Pick a format. The image is rendered at full resolution.
+            Pick a format and size. Rendering always starts from the original.
           </DialogDescription>
         </DialogHeader>
 
@@ -180,11 +194,60 @@ export function ImageEditorExportDialog({
             </Field>
           ) : null}
 
-          {editor.imageSize ? (
-            <p className="text-xs text-muted-foreground tabular-nums">
-              {editor.imageSize.width} × {editor.imageSize.height} px
-              {format === "jpeg" ? " · EXIF preserved" : null}
-            </p>
+          {full && output ? (
+            <Field>
+              <div className="flex items-center justify-between gap-3">
+                <FieldLabel htmlFor={`${id}-width`}>Size</FieldLabel>
+                {width ? (
+                  <button
+                    className="text-xs text-muted-foreground hover:text-foreground"
+                    onClick={() => setWidth(null)}
+                    type="button"
+                  >
+                    Full size
+                  </button>
+                ) : null}
+              </div>
+              <div className="flex items-center gap-2">
+                <Input
+                  aria-label="Width in pixels"
+                  className="h-8 w-24 tabular-nums"
+                  id={`${id}-width`}
+                  inputMode="numeric"
+                  max={16384}
+                  min={1}
+                  onChange={(event) => {
+                    const next = Number(event.target.value);
+                    setWidth(next > 0 ? Math.min(16384, Math.round(next)) : null);
+                  }}
+                  type="number"
+                  value={output.width}
+                />
+                <span className="text-muted-foreground">×</span>
+                <Input
+                  aria-label="Height in pixels"
+                  className="h-8 w-24 tabular-nums"
+                  inputMode="numeric"
+                  max={16384}
+                  min={1}
+                  onChange={(event) => {
+                    const next = Number(event.target.value);
+                    setWidth(
+                      next > 0
+                        ? Math.min(16384, Math.max(1, Math.round((next * full.width) / full.height)))
+                        : null,
+                    );
+                  }}
+                  type="number"
+                  value={output.height}
+                />
+                <span className="text-xs text-muted-foreground">px</span>
+              </div>
+              <p className="text-xs text-muted-foreground tabular-nums">
+                {width ? `${Math.round((output.width / full.width) * 100)}% of the crop` : "Full resolution"}
+                {format === "jpeg" ? " · EXIF preserved" : null}
+              </p>
+            </Field>
           ) : null}
 
           {error ? (

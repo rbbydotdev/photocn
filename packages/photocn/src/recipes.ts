@@ -7,6 +7,7 @@ import {
   type EffectParams,
   type LightParams,
 } from "./editor-params";
+import { createGeometry, type GeometryParams } from "./compose";
 
 export interface RecipeV1 {
   version: 1;
@@ -23,6 +24,8 @@ export interface RecipeV1 {
   >;
   /** `strength` is 0..1 (omitted = full strength). */
   filters?: { label: string; strength?: number };
+  /** Crop, straighten, perspective, turns and flips (only non-default fields). */
+  geometry?: Partial<GeometryParams>;
 }
 
 const BLUR_KEYS = [
@@ -78,7 +81,9 @@ export function buildRecipe(
         : { label: filterLabel }
       : undefined;
 
-  if (!lights && !colors && !effects && !blur && !filters) return null;
+  const geometry = diffGeometry(params.geometry);
+
+  if (!lights && !colors && !effects && !blur && !filters && !geometry) return null;
 
   const recipe: RecipeV1 = { version: 1 };
   if (name) recipe.name = name;
@@ -87,6 +92,7 @@ export function buildRecipe(
   if (effects) recipe.effects = effects;
   if (blur) recipe.blur = blur;
   if (filters) recipe.filters = filters;
+  if (geometry) recipe.geometry = geometry;
   return recipe;
 }
 
@@ -102,6 +108,9 @@ export function applyRecipe(
   if (recipe.colors) Object.assign(next.colors, recipe.colors);
   if (recipe.effects) Object.assign(next.effects, recipe.effects);
   if (recipe.blur) Object.assign(next.blur, recipe.blur);
+  // Geometry is normalized, so it applies to any photo. Recipes without it
+  // leave the current crop alone.
+  if (recipe.geometry) next.geometry = { ...createGeometry(), ...recipe.geometry };
 
   if (recipe.filters) {
     // Label-only placeholder; resolve it to a renderer-ready option with a
@@ -146,4 +155,14 @@ export function downloadRecipe(recipe: RecipeV1, filename?: string): void {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+function diffGeometry(geometry: GeometryParams): Partial<GeometryParams> | undefined {
+  const defaults = createGeometry() as unknown as Record<string, unknown>;
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(geometry)) {
+    if (key.startsWith("$")) continue;
+    if (JSON.stringify(value) !== JSON.stringify(defaults[key])) out[key] = value;
+  }
+  return Object.keys(out).length ? (out as Partial<GeometryParams>) : undefined;
 }

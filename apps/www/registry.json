@@ -58,7 +58,7 @@
       "name": "image-editor-canvas",
       "type": "registry:component",
       "title": "Canvas",
-      "description": "GPU preview stage with pan/zoom, crop drawing, blur focus, perspective handles, drag-and-drop and hold-to-compare.",
+      "description": "The image stage: crop frame and perspective corners in the crop tool; zoom, blur focus, drag-and-drop and hold-to-compare everywhere else.",
       "dependencies": [
         "lucide-react",
         "photocn@^0.1.0"
@@ -74,14 +74,9 @@
           "target": "components/image-editor/canvas.tsx"
         },
         {
-          "path": "src/registry/image-editor/crop-workspace.tsx",
+          "path": "src/registry/image-editor/crop-overlay.tsx",
           "type": "registry:component",
-          "target": "components/image-editor/crop-workspace.tsx"
-        },
-        {
-          "path": "src/registry/image-editor/perspective-overlay.tsx",
-          "type": "registry:component",
-          "target": "components/image-editor/perspective-overlay.tsx"
+          "target": "components/image-editor/crop-overlay.tsx"
         },
         {
           "path": "src/registry/image-editor/blur-center-overlay.tsx",
@@ -303,7 +298,7 @@
       "name": "image-editor-crop",
       "type": "registry:component",
       "title": "Crop",
-      "description": "Crop, aspect ratios, rotate, flip, perspective and resize.",
+      "description": "Quarter turns, flips, aspect ratios, straighten and perspective. Non-destructive: reopen and widen the crop any time.",
       "dependencies": [
         "lucide-react",
         "photocn@^0.1.0"
@@ -311,7 +306,7 @@
       "registryDependencies": [
         "button",
         "field",
-        "input",
+        "http://localhost:3000/r/image-editor-panel-header.json",
         "select",
         "separator",
         "slider",
@@ -391,7 +386,7 @@
       "name": "image-editor-export",
       "type": "registry:component",
       "title": "Export Dialog",
-      "description": "Format and quality picker that downloads or saves the result.",
+      "description": "Format, quality and output size; downloads or saves the result.",
       "dependencies": [
         "lucide-react",
         "photocn@^0.1.0"
@@ -401,6 +396,7 @@
         "button",
         "dialog",
         "field",
+        "input",
         "select",
         "slider"
       ],

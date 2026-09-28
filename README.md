@@ -62,5 +62,7 @@ PHOTOCN_SPEC="photocn@file:$PWD/photocn-0.1.0.tgz" REGISTRY_URL=http://localhost
 
 ## Notes
 
+- Crop & transform is non-destructive: geometry is one small state rendered from the original in a fixed order (orientation → perspective → straighten → crop), and resize happens at export. See [docs/compose.md](docs/compose.md).
+
 - The components target the **Radix** flavor of shadcn/ui (`shadcn init -b radix`). A Base UI flavor is not built yet.
 - Rendering uses a Web Worker with OffscreenCanvas when available and falls back to the main thread otherwise. Under a strict CSP without `worker-src blob:`, pass `spawnWorker`.

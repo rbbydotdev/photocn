@@ -1,11 +1,12 @@
 export { ImageEditorProvider, useImageEditor, useOptionalImageEditor } from "./context";
 export type { ImageEditorProviderProps } from "./context";
-export { useImageEditorState } from "./use-image-editor-state";
+export { resolveOutputSize, useImageEditorState } from "./use-image-editor-state";
 export type {
   ImageEditorApi,
   ImageEditorExportFormat,
   ImageEditorExportOptions,
   ImageEditorExportResult,
+  ImageEditorGeometryApi,
   ImageEditorSource,
   ImageEditorStatus,
   UseImageEditorStateOptions,
@@ -13,13 +14,9 @@ export type {
 export { useImageEditorKeybindings } from "./use-image-editor-keybindings";
 export * from "./types";
 export {
-  bestFitCropForAspect,
   errorMessage,
-  extractCropRect,
-  inferAspectRatioLabel,
+  matchAspectRatio,
   parseAspectRatio,
   patchEditorParams,
-  reshapeCropToAspect,
-  rotationFitScale,
 } from "./helpers";
-export type { ParamPatch, PreviewSize } from "./helpers";
+export type { ParamPatch } from "./helpers";

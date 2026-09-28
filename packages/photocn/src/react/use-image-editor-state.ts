@@ -13,13 +13,24 @@ import {
   type EditorParams,
 } from "../editor-params";
 import {
-  imageAspectRatio,
-  resizeDimensionsFromHeight,
-  resizeDimensionsFromWidth,
-  rotateCanvasAngle,
-} from "../composition";
-import { stageRectToImageRect } from "../crop-projection";
-import type { PerspectiveQuad } from "../perspective-geometry";
+  createGeometry,
+  cropForAspectRatio,
+  effectiveCrop,
+  flipGeometry,
+  imagePolygon,
+  isGeometryDefault,
+  orientedSize,
+  outputPixelSize,
+  polygonBounds,
+  rotateGeometry,
+  setCornerTarget,
+  STRAIGHTEN_LIMIT,
+  type GeometryParams,
+  type NormalizedRect,
+  type Quad,
+  type Size,
+  type Vec2,
+} from "../compose";
 import {
   createExifOutputBlob,
   type BrowserExifHandle,
@@ -49,16 +60,10 @@ import {
 } from "../hooks/use-mini-photo-editor";
 
 import {
-  bestFitCropForAspect,
-  extractCropRect,
-  inferAspectRatioLabel,
+  matchAspectRatio,
   parseAspectRatio,
   patchEditorParams,
-  reshapeCropToAspect,
-  resolvePreviewSize,
-  rotationFitScale,
   type ParamPatch,
-  type PreviewSize,
 } from "./helpers";
 import {
   adjustDefaultValue,
@@ -74,14 +79,9 @@ import {
   type AspectRatioOption,
   type BlendValue,
   type BlurValue,
-  type CropRect,
-  type CropTransformValue,
   type CurveChannels,
   type FiltersValue,
   type ImageEditorToolId,
-  type ResizeChange,
-  type ResizeValue,
-  type ViewTransform,
 } from "./types";
 import { useImageEditorKeybindings } from "./use-image-editor-keybindings";
 
@@ -96,6 +96,12 @@ export interface ImageEditorExportOptions {
   quality?: number;
   /** Copy the source EXIF block into the output (JPEG only). Default `true`. */
   preserveExif?: boolean;
+  /**
+   * Output size in px (resize). Give one side to keep the crop's ratio, or
+   * both to set it exactly. Default: the crop at full resolution.
+   */
+  width?: number;
+  height?: number;
 }
 
 export interface ImageEditorExportResult {
@@ -129,7 +135,7 @@ export interface UseImageEditorStateOptions {
   disabled?: boolean;
   /** Filter presets offered by `filters.presets`. */
   filterPresets?: readonly FilterPreset[];
-  /** Aspect ratio options offered by `crop.aspectRatioOptions`. */
+  /** Crop ratio presets offered by `geometry.aspectRatioOptions`. */
   aspectRatioOptions?: readonly AspectRatioOption[];
   /**
    * Where rendering happens. `"worker"` (default when supported) renders on an
@@ -143,20 +149,79 @@ export interface UseImageEditorStateOptions {
   spawnWorker?: () => Worker;
   /** Preview proxy long-edge cap. `0` disables. Default: canvas size x DPR. */
   proxyMaxDim?: number | ProxyMaxDimResolver;
-  /** Global keyboard shortcuts (undo/redo, Esc clears crop). Default `true`. */
+  /** Global keyboard shortcuts (undo/redo). Default `true`. */
   keyboardShortcuts?: boolean;
   /** Undo stack depth. Default 100. */
   historyLimit?: number;
   /** Debounce (ms) that folds slider drags into one undo step. Default 400. */
   commitDelay?: number;
+  /** Tool id that shows the crop view (whole image + frame). Default `"compose"`. */
+  cropTool?: ImageEditorToolId;
 }
 
 export type ImageEditorStatus = "idle" | "loading" | "ready" | "error";
 
+type TransientOption = { transient?: boolean };
+
+export interface ImageEditorGeometryApi {
+  /** The stored geometry (the user's intent). See docs/compose.md. */
+  value: GeometryParams;
+  isDefault: boolean;
+  /** Full-resolution source size, once loaded. */
+  sourceSize: Size | null;
+  /** Source size after flip/quarter turns. */
+  orientedSize: Size | null;
+  /** The crop that is rendered (limited to the image), normalized oriented. */
+  crop: NormalizedRect;
+  /** Where the image's corners land (normalized oriented, TL TR BR BL). */
+  polygon: Quad | null;
+  /** Bounds of `polygon`: what the crop view renders. */
+  bounds: NormalizedRect;
+  /** Output size of the crop at full resolution. */
+  outputSize: Size | null;
+  /** Preset value matching the locked ratio ("free" when unlocked). */
+  aspectRatio: string;
+  /** Whether the crop is portrait. */
+  portrait: boolean;
+  aspectRatioOptions: readonly AspectRatioOption[];
+  /** Lock the crop to a preset ("free" unlocks), keeping the crop's orientation. */
+  setAspectRatio: (value: string) => void;
+  /** Swap between portrait and landscape. */
+  toggleOrientation: () => void;
+  /** Set the user's crop (normalized oriented); `null` = whole image. */
+  setCrop: (crop: NormalizedRect | null, options?: TransientOption) => void;
+  /** Quarter turn of the whole picture (the crop turns with it). */
+  rotate: (direction: 1 | -1) => void;
+  /** Mirror what you see. */
+  flip: (axis: "horizontal" | "vertical") => void;
+  /** Degrees, ±45. The frame stays put; the crop auto-fits. */
+  setStraighten: (degrees: number, options?: TransientOption) => void;
+  /** Keystone sliders, -1..1. */
+  setPerspective: (value: { x?: number; y?: number }, options?: TransientOption) => void;
+  /** Advanced: move one warped image corner to `target` (normalized oriented). */
+  setCorner: (index: 0 | 1 | 2 | 3, target: Vec2, options?: TransientOption) => void;
+  resetCorners: () => void;
+  /** Whether the corner handles are shown (advanced perspective). */
+  editingCorners: boolean;
+  setEditingCorners: (editing: boolean) => void;
+  /** Flush pending transient edits (e.g. on pointer up). */
+  commit: () => void;
+  /** Reset geometry only. */
+  reset: () => void;
+  /**
+   * The rect the canvas is currently showing (normalized oriented). Lags
+   * the requested view by a frame while the renderer catches up, so overlays
+   * stay aligned with the pixels.
+   */
+  displayRect: NormalizedRect;
+  /** Whether the canvas shows the whole image (crop view) or the result. */
+  view: "crop" | "full";
+}
+
 export interface ImageEditorApi {
   /** Current committed + transient params (what the user sees). */
   params: EditorParams;
-  /** Params actually sent to the renderer (compare / crop preview aware). */
+  /** Params actually sent to the renderer (compare / crop view aware). */
   renderParams: EditorParams;
   /** Replace all params (one undo step). */
   setParams: (params: EditorParams) => void;
@@ -167,7 +232,7 @@ export interface ImageEditorApi {
   patch: (
     section: EditorParamSection,
     patch: Record<string, unknown>,
-    options?: { transient?: boolean },
+    options?: TransientOption,
   ) => void;
   /** Flush pending transient edits into history now. */
   commit: () => void;
@@ -182,7 +247,8 @@ export interface ImageEditorApi {
   hasImage: boolean;
   /** Object/remote URL of the current image, if any. */
   imageSrc: string | null;
-  imageSize: PreviewSize | null;
+  /** Full-resolution source size. */
+  imageSize: Size | null;
   filename: string | undefined;
   /** Open the OS file picker and load the chosen image. */
   openFile: (options?: SelectImageFileOptions) => Promise<void>;
@@ -251,48 +317,11 @@ export interface ImageEditorApi {
     reset: () => void;
   };
 
-  crop: {
-    /** Draft rect in stage-percent coordinates. */
-    rect: CropRect;
-    isDrawn: boolean;
-    aspectRatio: string;
-    /** Numeric ratio (w/h) or null for free. */
-    aspectRatioValue: number | null;
-    aspectRatioOptions: readonly AspectRatioOption[];
-    setAspectRatio: (value: string) => void;
-    /** Live update while dragging (transient). */
-    update: (rect: CropRect) => void;
-    /** Commit a dragged rect as the applied crop. */
-    commitDrag: (rect: CropRect) => void;
-    /** Hide the draft rect; the committed crop stays applied. */
-    apply: () => void;
-    /** Drop the draft rect. */
-    clear: () => void;
-    transform: CropTransformValue;
-    setTransform: (value: CropTransformValue) => void;
-    /** Quarter-turn canvas rotation. */
-    canvasAngle: number;
-    rotate: (delta: 90 | -90) => void;
-    resize: ResizeValue;
-    setResize: (next: ResizeChange) => void;
-    resetResize: () => void;
-    /** Reset crop, rotation, flips and zoom. */
-    reset: () => void;
-  };
-
-  perspective: {
-    isEditing: boolean;
-    hasCommitted: boolean;
-    /** Handle positions (normalized 0..1) while editing. */
-    quad: PerspectiveQuad;
-    toggle: () => void;
-    change: (quad: PerspectiveQuad) => void;
-    commit: (quad: PerspectiveQuad) => void;
-    reset: () => void;
-  };
+  /** Crop, straighten, perspective, turns and flips (non-destructive). */
+  geometry: ImageEditorGeometryApi;
 
   recipes: {
-    /** Serializable diff of the current look, or null when unedited. */
+    /** Serializable diff of the current edit, or null when unedited. */
     current: RecipeV1 | null;
     apply: (recipe: RecipeV1) => Promise<void>;
   };
@@ -303,14 +332,12 @@ export interface ImageEditorApi {
     canvasRef: RefObject<HTMLCanvasElement | null>;
   };
 
-  /** Encode the edited image. Rendering happens off-thread when possible. */
+  /** Encode the edited image at full resolution (or `width`/`height`). */
   exportImage: (options?: ImageEditorExportOptions) => Promise<ImageEditorExportResult>;
   /** Export and trigger a browser download. */
   download: (options?: ImageEditorExportOptions) => Promise<ImageEditorExportResult>;
 
-  /** View transform for the preview (rotation/zoom outside compose mode). */
-  view: ViewTransform;
-  /** Attach to the measured stage element the canvas is drawn in. */
+  /** Attach to the element the canvas is laid out in. */
   stageRef: RefObject<HTMLDivElement | null>;
   /** Attach to the editor's outer element (scopes keyboard shortcuts). */
   rootRef: RefObject<HTMLDivElement | null>;
@@ -323,16 +350,8 @@ export interface ImageEditorApi {
   worker: WorkerEditor | undefined;
 }
 
-const defaultCrop: CropRect = { x: 10, y: 10, width: 80, height: 80 };
-const identityView: ViewTransform = { zoom: 1, rotation: 0 };
-const PERSPECTIVE_SOURCE_FULL: PerspectiveQuad = [
-  [0, 0],
-  [1, 0],
-  [1, 1],
-  [0, 1],
-];
-const fullQuad = () =>
-  PERSPECTIVE_SOURCE_FULL.map((point) => [...point]) as unknown as PerspectiveQuad;
+const FULL_RECT: NormalizedRect = { x: 0, y: 0, width: 1, height: 1 };
+const MAX_OUTPUT = 16384;
 
 const exportFormatInfo: Record<
   ImageEditorExportFormat,
@@ -342,6 +361,28 @@ const exportFormatInfo: Record<
   jpeg: { mime: "image/jpeg", extension: "jpg", quality: 0.92 },
   webp: { mime: "image/webp", extension: "webp", quality: 0.9 },
 };
+
+const rectsEqual = (a: NormalizedRect, b: NormalizedRect) =>
+  Math.abs(a.x - b.x) < 1e-9 &&
+  Math.abs(a.y - b.y) < 1e-9 &&
+  Math.abs(a.width - b.width) < 1e-9 &&
+  Math.abs(a.height - b.height) < 1e-9;
+
+/** Resolve export resize options against the crop's size. */
+export function resolveOutputSize(
+  crop: Size,
+  target: { width?: number; height?: number },
+): Size {
+  const ratio = crop.width / crop.height;
+  let { width, height } = target;
+  if (width && !height) height = width / ratio;
+  if (height && !width) width = height * ratio;
+  if (!width || !height) return crop;
+  return {
+    width: Math.max(1, Math.min(MAX_OUTPUT, Math.round(width))),
+    height: Math.max(1, Math.min(MAX_OUTPUT, Math.round(height))),
+  };
+}
 
 /**
  * The headless image editor. Owns params + history, the renderer, and every
@@ -371,6 +412,7 @@ export function useImageEditorState(
     keyboardShortcuts = true,
     historyLimit,
     commitDelay = 400,
+    cropTool = "compose",
   } = options;
 
   const {
@@ -390,59 +432,21 @@ export function useImageEditorState(
     defaultValue: defaultTool,
     onChange: onToolChange,
   });
-  const isComposeTool = tool === "compose";
+  const isCropTool = tool === cropTool;
+  const [editingCorners, setEditingCorners] = useState(false);
 
-  // ── Hold-to-compare ────────────────────────────────────────────────────
-  // Renders the original content within the current geometric frame: crop,
-  // rotation, flips, perspective and resize are kept so nothing jumps; every
-  // color/tonal op reverts.
+  // ── Hold-to-compare: original colors, same geometry ─────────────────
   const [isComparing, setIsComparing] = useState(false);
   const compareBaseline = useMemo(() => {
     const base = createEditorParams();
-    base.crop.appliedCrop = params.crop.appliedCrop;
-    base.crop.canvas_angle = params.crop.canvas_angle;
-    Object.assign(base.trs, params.trs);
-    Object.assign(base.perspective2, params.perspective2);
-    Object.assign(base.resizer, params.resizer);
+    base.geometry = params.geometry;
     return base;
-  }, [
-    params.crop.appliedCrop,
-    params.crop.canvas_angle,
-    params.trs,
-    params.perspective2,
-    params.resizer,
-  ]);
-
-  // ── Perspective (direct manipulation of the photo's corners) ───────────
-  const [isEditingPerspective, setIsEditingPerspective] = useState(false);
-  const [isDraggingPerspective, setIsDraggingPerspective] = useState(false);
-  const [perspectiveDraft, setPerspectiveDraft] =
-    useState<PerspectiveQuad>(fullQuad);
+  }, [params.geometry]);
 
   const renderParams = useMemo<EditorParams>(() => {
-    if (isComparing) return compareBaseline;
-    // While a draft crop rect is on screen in compose mode, render the
-    // un-cropped image so the overlay sits on the original.
-    if (isComposeTool && extractCropRect(params.crop.currentcrop)) {
-      return patchEditorParams(params, "crop", { appliedCrop: 0 });
-    }
-    if (isEditingPerspective && isDraggingPerspective) {
-      return patchEditorParams(params, "perspective2", {
-        before: PERSPECTIVE_SOURCE_FULL,
-        after: perspectiveDraft,
-        modified: 1,
-      });
-    }
-    return params;
-  }, [
-    isComparing,
-    compareBaseline,
-    isComposeTool,
-    isEditingPerspective,
-    isDraggingPerspective,
-    perspectiveDraft,
-    params,
-  ]);
+    const base = isComparing && !isCropTool ? compareBaseline : params;
+    return isCropTool ? patchEditorParams(base, "geometry", { $view: "full" }) : base;
+  }, [isComparing, isCropTool, compareBaseline, params]);
 
   // ── Engine ─────────────────────────────────────────────────────────────
   const [useWorker] = useState(() =>
@@ -451,6 +455,17 @@ export function useImageEditorState(
   const [workerHistogram, setWorkerHistogram] = useState<RgbHistogram | null>(
     null,
   );
+
+  // Track which view rect the canvas actually shows so overlays line up
+  // with painted pixels, not with a frame that hasn't rendered yet.
+  const requestedRectRef = useRef<NormalizedRect>(FULL_RECT);
+  const [displayRect, setDisplayRect] = useState<NormalizedRect>(FULL_RECT);
+  const onPaintRef = useRef(() => {});
+  onPaintRef.current = () => {
+    const next = requestedRectRef.current;
+    setDisplayRect((prev) => (rectsEqual(prev, next) ? prev : next));
+  };
+
   const spawnRef = useRef(spawnWorker);
   spawnRef.current = spawnWorker;
   const workerFactory = useMemo(
@@ -460,6 +475,7 @@ export function useImageEditorState(
             spawn: () => (spawnRef.current ?? spawnInlineWorker)(),
             proxyMaxDim,
             onHistogram: setWorkerHistogram,
+            onPaint: () => onPaintRef.current(),
           })
         : undefined,
     // proxyMaxDim is read once per editor instance; changing it later would
@@ -479,6 +495,7 @@ export function useImageEditorState(
     histogramOptions: useWorker
       ? { drawOnRender: false, precomputed: workerHistogram }
       : undefined,
+    onHistogramUpdate: useWorker ? undefined : () => onPaintRef.current(),
   });
   const imageInput = engine.imageInput;
   const worker = (engine.editor as unknown as { worker?: WorkerEditor } | null)
@@ -492,35 +509,12 @@ export function useImageEditorState(
   const stageRef = useRef<HTMLDivElement | null>(null);
   const rootRef = useRef<HTMLDivElement | null>(null);
 
-  const previewSize = resolvePreviewSize(engine.renderer, imageInput.image);
-  const previewAspectRatio = previewSize ? imageAspectRatio(previewSize) : 0;
-
-  const aspectRatio = useMemo(
-    () =>
-      inferAspectRatioLabel(
-        params.crop.ar ?? 0,
-        previewAspectRatio,
-        aspectRatioOptions,
-      ),
-    [params.crop.ar, previewAspectRatio, aspectRatioOptions],
-  );
-  const aspectRatioValue = useMemo(
-    () => parseAspectRatio(aspectRatio, previewAspectRatio),
-    [aspectRatio, previewAspectRatio],
-  );
-  const cropRect = extractCropRect(params.crop.currentcrop);
-  const crop = cropRect ?? defaultCrop;
-  const isCropDrawn = cropRect !== null;
-  const rotationScale = rotationFitScale(previewSize, params.trs.angle ?? 0);
-  // params.trs.scale = zoom * fitScale - 1  ⇒  zoom = (scale + 1) / fitScale
-  const cropZoom = rotationScale > 0 ? (params.trs.scale + 1) / rotationScale : 1;
-  const view = useMemo<ViewTransform>(
-    () =>
-      isComposeTool
-        ? identityView
-        : { rotation: params.trs.angle ?? 0, zoom: cropZoom * rotationScale },
-    [isComposeTool, params.trs.angle, cropZoom, rotationScale],
-  );
+  const image = imageInput.image;
+  const sourceSize = useMemo<Size | null>(() => {
+    const width = image?.naturalWidth || image?.width || 0;
+    const height = image?.naturalHeight || image?.height || 0;
+    return width > 0 && height > 0 ? { width, height } : null;
+  }, [image]);
 
   // ── Commit plumbing ────────────────────────────────────────────────────
   // Slider drags patch transiently and schedule a debounced commit so a whole
@@ -567,6 +561,12 @@ export function useImageEditorState(
     emit(patchEditorParams(paramsRef.current, section, patch));
   };
 
+  const patchWith = (
+    section: EditorParamSection,
+    patch: Record<string, unknown>,
+    options?: TransientOption,
+  ) => (options?.transient ? patchTransient(section, patch) : patchNow(section, patch));
+
   const replaceAll = (patches: readonly ParamPatch[]) => {
     flushCommit();
     const next = patchEditorParams(paramsRef.current, patches);
@@ -582,17 +582,14 @@ export function useImageEditorState(
 
   const resetAll = () => {
     flushCommit();
-    setIsEditingPerspective(false);
-    setIsDraggingPerspective(false);
+    setEditingCorners(false);
     reset();
     emit(createEditorParams());
   };
 
   // ── Image IO ───────────────────────────────────────────────────────────
   const imageSrc =
-    imageInput.image?.currentSrc ||
-    imageInput.image?.src ||
-    (typeof src === "string" ? src : null);
+    image?.currentSrc || image?.src || (typeof src === "string" ? src : null);
   const filename = imageInput.fileInfo?.name;
 
   const openFile = async (selectOptions?: SelectImageFileOptions) => {
@@ -605,124 +602,124 @@ export function useImageEditorState(
     await imageInput.decode(next, loadOptions);
   };
 
-  // ── Crop / composition ─────────────────────────────────────────────────
-  const updateCrop = (rect: CropRect) => patchTransient("crop", { currentcrop: rect });
+  // ── Geometry ───────────────────────────────────────────────────────────
+  const geometry = params.geometry;
+  const geometryRef = useRef(geometry);
+  geometryRef.current = geometry;
+  const sourceRef = useRef(sourceSize);
+  sourceRef.current = sourceSize;
 
-  const commitCropFromDrag = (rect: CropRect) => {
-    // A click without a real drag: keep the overlay, don't crop to nothing.
-    if (rect.width < 1 || rect.height < 1) {
-      updateCrop(rect);
-      return;
+  const derived = useMemo(() => {
+    if (!sourceSize) {
+      return {
+        oriented: null,
+        polygon: null,
+        crop: geometry.crop ?? FULL_RECT,
+        bounds: FULL_RECT,
+        outputSize: null,
+      };
     }
-    const renderer = engine.renderer;
-    const stage = stageRef.current?.getBoundingClientRect();
-    if (!renderer || !stage || stage.width <= 0 || stage.height <= 0) return;
-    const cropBox = stageRectToImageRect(
-      rect,
-      { width: stage.width, height: stage.height },
-      { width: renderer.width, height: renderer.height },
-    );
-    if (!cropBox) return;
-    // `currentcrop` keeps the draft on screen; `appliedCrop` is what the
-    // pipeline (and export) actually crops to.
-    replaceAll([
-      {
-        section: "crop",
-        patch: {
-          currentcrop: rect,
-          glcrop: 0,
-          appliedCrop: cropBox,
-          ar: 0,
-          arindex: 0,
-        },
-      },
-      { section: "trs", patch: { angle: 0, scale: 0, fliph: 0, flipv: 0 } },
-    ]);
+    const oriented = orientedSize(sourceSize, geometry);
+    const polygon = imagePolygon(geometry, sourceSize);
+    const crop = effectiveCrop(geometry, sourceSize);
+    return {
+      oriented,
+      polygon,
+      crop,
+      bounds: polygonBounds(polygon),
+      outputSize: outputPixelSize(geometry, sourceSize, crop),
+    };
+  }, [geometry, sourceSize]);
+
+  requestedRectRef.current = isCropTool ? derived.bounds : derived.crop;
+
+  const orientedRatio = derived.oriented
+    ? derived.oriented.width / derived.oriented.height
+    : 0;
+  const cropPortrait = derived.outputSize
+    ? derived.outputSize.height > derived.outputSize.width
+    : false;
+  const aspect = matchAspectRatio(geometry.aspectRatio, orientedRatio, aspectRatioOptions);
+
+  const setGeometry = (next: GeometryParams, options?: TransientOption) =>
+    patchWith("geometry", { ...next }, options);
+
+  const withSource = (fn: (source: Size) => void) => {
+    const source = sourceRef.current;
+    if (source) fn(source);
   };
+
+  const applyRatio = (ratio: number | null) =>
+    withSource((source) => setGeometry(cropForAspectRatio(geometryRef.current, source, ratio)));
 
   const setAspectRatio = (value: string) => {
-    const ratio = parseAspectRatio(value, previewAspectRatio);
-    if (!ratio) {
-      patchNow("crop", { ar: 0 });
+    let ratio = parseAspectRatio(value, orientedRatio);
+    // Presets follow the crop's current orientation.
+    if (ratio && value !== "original" && ratio !== 1 && cropPortrait === ratio > 1) {
+      ratio = 1 / ratio;
+    }
+    applyRatio(ratio);
+  };
+
+  const toggleOrientation = () => {
+    const current = geometryRef.current.aspectRatio;
+    if (current) {
+      applyRatio(1 / current);
       return;
     }
-    const stage = stageRef.current?.getBoundingClientRect();
-    const reshaped =
-      stage && previewSize
-        ? bestFitCropForAspect(
-            { width: stage.width, height: stage.height },
-            previewSize,
-            ratio,
-          )
-        : reshapeCropToAspect(crop, ratio);
-    patchNow("crop", { ar: ratio, currentcrop: reshaped });
+    // Free crop: swap the crop's own ratio.
+    const size = derived.outputSize;
+    if (size) applyRatio(size.height / size.width);
   };
 
-  const setTransform = (next: CropTransformValue) => {
-    const fit = rotationFitScale(previewSize, next.rotation);
-    patchTransient("trs", {
-      angle: next.rotation,
-      scale: (next.scale / 100) * fit - 1,
-      fliph: next.flipHorizontal,
-      flipv: next.flipVertical,
-    });
-  };
-
-  const setResize = (next: ResizeChange) => {
-    const aspect = previewSize ? imageAspectRatio(previewSize) : 0;
-    if (!next.locked || !aspect) {
-      patchNow("resizer", { width: next.width, height: next.height });
-      return;
-    }
-    const widthChanged = next.width !== (params.resizer.width ?? 0);
-    const dims = widthChanged
-      ? resizeDimensionsFromWidth(next.width, aspect)
-      : resizeDimensionsFromHeight(next.height, aspect);
-    patchNow("resizer", { width: dims.width, height: dims.height });
-  };
-
-  const resetComposition = () =>
-    replaceAll([
-      {
-        section: "crop",
-        patch: { currentcrop: 0, glcrop: 0, appliedCrop: 0, ar: 0, canvas_angle: 0 },
-      },
-      { section: "trs", patch: { angle: 0, scale: 0, fliph: 0, flipv: 0 } },
-    ]);
-
-  const clearCrop = () => patchNow("crop", { currentcrop: 0, ar: 0, arindex: 0 });
-
-  // ── Perspective ────────────────────────────────────────────────────────
-  const togglePerspective = () => {
-    if (isEditingPerspective) {
-      setIsEditingPerspective(false);
-      setIsDraggingPerspective(false);
-      return;
-    }
-    const committed = params.perspective2.after;
-    setPerspectiveDraft(
-      committed && typeof committed !== "number" ? committed : fullQuad(),
-    );
-    setIsEditingPerspective(true);
-  };
-
-  const commitPerspective = (quad: PerspectiveQuad) => {
-    setIsDraggingPerspective(false);
-    replaceAll([
-      {
-        section: "perspective2",
-        patch: { before: PERSPECTIVE_SOURCE_FULL, after: quad, modified: 1 },
-      },
-    ]);
-  };
-
-  const resetPerspective = () => {
-    replaceAll([
-      { section: "perspective2", patch: { before: 0, after: 0, modified: 0 } },
-    ]);
-    setPerspectiveDraft(fullQuad());
-    setIsEditingPerspective(false);
-    setIsDraggingPerspective(false);
+  const geometryApi: ImageEditorGeometryApi = {
+    value: geometry,
+    isDefault: isGeometryDefault(geometry),
+    sourceSize,
+    orientedSize: derived.oriented,
+    crop: derived.crop,
+    polygon: derived.polygon,
+    bounds: derived.bounds,
+    outputSize: derived.outputSize,
+    aspectRatio: aspect.value,
+    portrait: cropPortrait,
+    aspectRatioOptions,
+    setAspectRatio,
+    toggleOrientation,
+    setCrop: (crop, opts) => setGeometry({ ...geometryRef.current, crop }, opts),
+    rotate: (direction) => setGeometry(rotateGeometry(geometryRef.current, direction)),
+    flip: (axis) => setGeometry(flipGeometry(geometryRef.current, axis)),
+    setStraighten: (degrees, opts) =>
+      setGeometry(
+        {
+          ...geometryRef.current,
+          straighten: Math.max(-STRAIGHTEN_LIMIT, Math.min(STRAIGHTEN_LIMIT, degrees)),
+        },
+        opts,
+      ),
+    setPerspective: ({ x, y }, opts) =>
+      setGeometry(
+        {
+          ...geometryRef.current,
+          perspectiveX: clamp1(x ?? geometryRef.current.perspectiveX),
+          perspectiveY: clamp1(y ?? geometryRef.current.perspectiveY),
+        },
+        opts,
+      ),
+    setCorner: (index, target, opts) =>
+      withSource((source) =>
+        setGeometry(setCornerTarget(geometryRef.current, source, index, target), opts),
+      ),
+    resetCorners: () => setGeometry({ ...geometryRef.current, corners: null }),
+    editingCorners: isCropTool && editingCorners,
+    setEditingCorners,
+    commit: flushCommit,
+    reset: () => {
+      setEditingCorners(false);
+      setGeometry(createGeometry());
+    },
+    displayRect,
+    view: isCropTool ? "full" : "crop",
   };
 
   // ── Filters ────────────────────────────────────────────────────────────
@@ -748,10 +745,8 @@ export function useImageEditorState(
   // ── Recipes ────────────────────────────────────────────────────────────
   const applyRecipeAsync = async (recipe: RecipeV1) => {
     const next = applyRecipe(paramsRef.current, recipe);
-    const preset = recipe.filters?.label
-      ? findFilterPreset(recipe.filters.label, filterPresets)
-      : undefined;
     if (recipe.filters?.label) {
+      const preset = findFilterPreset(recipe.filters.label, filterPresets);
       try {
         next.filters.opt = preset ? await preset.load() : 0;
       } catch {
@@ -769,25 +764,38 @@ export function useImageEditorState(
     const info = exportFormatInfo[format];
     const quality = exportOptions.quality ?? info.quality;
     const renderer = engine.renderer;
-    if (!renderer) throw new Error("The image is not ready to export yet.");
-    // The preview may be showing an override (compose draft, compare);
-    // render the real params for capture, then restore the view.
-    engine.renderPipeline.render({ params: paramsRef.current });
+    const source = sourceRef.current;
+    if (!renderer || !source) throw new Error("The image is not ready to export yet.");
+    const current = paramsRef.current;
+    const crop = effectiveCrop(current.geometry, source);
+    const outputSize = resolveOutputSize(
+      outputPixelSize(current.geometry, source, crop),
+      exportOptions,
+    );
+    // Render the real result (not the crop view or a compare hold) at the
+    // requested size, capture, then restore the preview.
+    engine.renderPipeline.render({
+      params: patchEditorParams(current, "geometry", {
+        $view: "crop",
+        $outputSize: outputSize,
+      }),
+    });
     try {
       let blob: Blob;
       let type: string;
       let width: number;
       let height: number;
       if (worker) {
-        const result = await worker.exportBlob({ format: info.mime, quality });
-        ({ blob, type, width, height } = result);
+        ({ blob, type, width, height } = await worker.exportBlob({
+          format: info.mime,
+          quality,
+        }));
       } else {
-        const result = await engine.exportImage.exportBlob(renderer, {
+        ({ blob, width, height } = await engine.exportImage.exportBlob(renderer, {
           format,
           quality,
           originalExif: null,
-        });
-        ({ blob, width, height } = result);
+        }));
         type = blob.type || info.mime;
       }
       const exif = engine.exif.handle as BrowserExifHandle | null | undefined;
@@ -828,18 +836,19 @@ export function useImageEditorState(
   useImageEditorKeybindings({
     enabled: keyboardShortcuts && !disabled,
     rootRef,
-    undo,
+    undo: () => {
+      flushCommit();
+      undo();
+    },
     redo,
-    onEscape: isComposeTool && isCropDrawn ? clearCrop : undefined,
   });
 
   const status: ImageEditorStatus =
     imageInput.status === "error" || engine.miniGl.status === "error"
       ? "error"
-      : imageInput.isLoading ||
-          (imageInput.image && engine.miniGl.status !== "ready")
+      : imageInput.isLoading || (image && engine.miniGl.status !== "ready")
         ? "loading"
-        : imageInput.image
+        : image
           ? "ready"
           : "idle";
 
@@ -856,10 +865,7 @@ export function useImageEditorState(
     params,
     renderParams,
     setParams,
-    patch: (section, patch, patchOptions) =>
-      patchOptions?.transient
-        ? patchTransient(section, patch)
-        : patchNow(section, patch),
+    patch: patchWith,
     commit: flushCommit,
     resetAll,
 
@@ -870,7 +876,7 @@ export function useImageEditorState(
     isReady: status === "ready",
     hasImage: Boolean(imageSrc),
     imageSrc,
-    imageSize: previewSize,
+    imageSize: sourceSize,
     filename,
     openFile,
     load,
@@ -925,7 +931,7 @@ export function useImageEditorState(
     blend: {
       value: { blendMix: params.blender.blendmix ?? 0.5 },
       hasImage: Boolean(params.blender.blendmap),
-      setImage: (image) => patchNow("blender", { blendmap: image ?? 0 }),
+      setImage: (blendImage) => patchNow("blender", { blendmap: blendImage ?? 0 }),
       setMix: (mix) => patchTransient("blender", { blendmix: mix }),
       reset: () => patchNow("blender", { blendmap: 0, blendmix: 0.5 }),
     },
@@ -962,53 +968,7 @@ export function useImageEditorState(
       reset: () => patchNow("curve", { curvepoints: 0 }),
     },
 
-    crop: {
-      rect: crop,
-      isDrawn: isCropDrawn,
-      aspectRatio,
-      aspectRatioValue,
-      aspectRatioOptions,
-      setAspectRatio,
-      update: updateCrop,
-      commitDrag: commitCropFromDrag,
-      apply: () => patchNow("crop", { currentcrop: 0 }),
-      clear: clearCrop,
-      transform: {
-        rotation: params.trs.angle ?? 0,
-        scale: Math.round(cropZoom * 100),
-        flipHorizontal: Boolean(params.trs.fliph),
-        flipVertical: Boolean(params.trs.flipv),
-      },
-      setTransform,
-      canvasAngle: params.crop.canvas_angle ?? 0,
-      rotate: (delta) =>
-        patchNow("crop", {
-          canvas_angle: rotateCanvasAngle(params.crop.canvas_angle ?? 0, delta),
-        }),
-      resize: {
-        width: params.resizer.width ?? 0,
-        height: params.resizer.height ?? 0,
-        originalWidth: previewSize?.width ?? 0,
-        originalHeight: previewSize?.height ?? 0,
-      },
-      setResize,
-      resetResize: () => patchNow("resizer", { width: 0, height: 0 }),
-      reset: resetComposition,
-    },
-
-    perspective: {
-      isEditing: isEditingPerspective,
-      hasCommitted:
-        params.perspective2.before !== 0 && params.perspective2.after !== 0,
-      quad: perspectiveDraft,
-      toggle: togglePerspective,
-      change: (quad) => {
-        setPerspectiveDraft(quad);
-        setIsDraggingPerspective(true);
-      },
-      commit: commitPerspective,
-      reset: resetPerspective,
-    },
+    geometry: geometryApi,
 
     recipes: {
       current: buildRecipe(params),
@@ -1025,7 +985,6 @@ export function useImageEditorState(
     exportImage,
     download,
 
-    view,
     stageRef,
     rootRef,
     canvasRef: engine.miniGl.canvasRef,
@@ -1033,4 +992,8 @@ export function useImageEditorState(
     engine,
     worker,
   };
+}
+
+function clamp1(value: number): number {
+  return Math.max(-1, Math.min(1, value));
 }

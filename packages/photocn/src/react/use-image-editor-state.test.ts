@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createMatrixPreset } from "../filters";
 import { adjustDefaultValue } from "./types";
-import { useImageEditorState } from "./use-image-editor-state";
+import { resolveOutputSize, useImageEditorState } from "./use-image-editor-state";
 
 // No image is loaded, so no renderer is created: this exercises the pure
 // state/API layer only.
@@ -85,16 +85,63 @@ describe("useImageEditorState", () => {
     expect(result.current.tool).toBe("curves");
   });
 
-  it("rotates the canvas in quarter turns and resets composition", () => {
+  it("stores geometry non-destructively and undoes it", () => {
     const { result } = setup();
-    act(() => result.current.crop.rotate(90));
-    expect(result.current.crop.canvasAngle).toBe(90);
-    act(() => result.current.crop.reset());
-    expect(result.current.crop.canvasAngle).toBe(0);
+    act(() => result.current.geometry.setStraighten(8));
+    act(() => result.current.geometry.setPerspective({ y: 0.4 }));
+    expect(result.current.params.geometry).toMatchObject({ straighten: 8, perspectiveY: 0.4 });
+    act(() => result.current.history.undo());
+    expect(result.current.params.geometry.perspectiveY).toBe(0);
+    expect(result.current.params.geometry.straighten).toBe(8);
+    act(() => result.current.geometry.reset());
+    expect(result.current.geometry.isDefault).toBe(true);
+  });
+
+  it("clamps straighten to ±45° and perspective to ±1", () => {
+    const { result } = setup();
+    act(() => result.current.geometry.setStraighten(90));
+    act(() => result.current.geometry.setPerspective({ x: 3 }));
+    expect(result.current.params.geometry.straighten).toBe(45);
+    expect(result.current.params.geometry.perspectiveX).toBe(1);
+  });
+
+  it("renders the whole image in the crop tool and the result elsewhere", () => {
+    const { result } = setup({ defaultTool: "compose" });
+    expect(result.current.geometry.view).toBe("full");
+    expect(result.current.renderParams.geometry.$view).toBe("full");
+    expect(result.current.params.geometry.$view).toBeUndefined();
+    act(() => result.current.setTool("adjust"));
+    expect(result.current.renderParams.geometry.$view).toBeUndefined();
+  });
+
+  it("round-trips geometry through recipes", async () => {
+    const { result } = setup();
+    act(() => result.current.geometry.rotate(1));
+    act(() => result.current.geometry.setStraighten(-5));
+    const recipe = result.current.recipes.current!;
+    expect(recipe.geometry).toEqual({ quarterTurns: 1, straighten: -5 });
+    act(() => result.current.resetAll());
+    await act(() => result.current.recipes.apply(recipe));
+    expect(result.current.params.geometry).toMatchObject({ quarterTurns: 1, straighten: -5 });
   });
 
   it("rejects export before an image is ready", async () => {
     const { result } = setup();
     await expect(result.current.exportImage()).rejects.toThrow(/not ready/);
+  });
+});
+
+describe("resolveOutputSize (export resize)", () => {
+  const crop = { width: 3000, height: 2000 };
+  it("defaults to the crop at full resolution", () => {
+    expect(resolveOutputSize(crop, {})).toEqual(crop);
+  });
+  it("keeps the ratio when one side is given", () => {
+    expect(resolveOutputSize(crop, { width: 1200 })).toEqual({ width: 1200, height: 800 });
+    expect(resolveOutputSize(crop, { height: 500 })).toEqual({ width: 750, height: 500 });
+  });
+  it("uses both sides when given and caps huge sizes", () => {
+    expect(resolveOutputSize(crop, { width: 640, height: 640 })).toEqual({ width: 640, height: 640 });
+    expect(resolveOutputSize(crop, { width: 100000 }).width).toBe(16384);
   });
 });
