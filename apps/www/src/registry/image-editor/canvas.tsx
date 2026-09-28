@@ -45,6 +45,38 @@ export interface ImageEditorCanvasProps {
 type UserView = { scale: number; x: number; y: number };
 const IDENTITY_VIEW: UserView = { scale: 1, x: 0, y: 0 };
 
+const SETTLE_MS = 240;
+const easeOutCubic = (t: number) => 1 - (1 - t) ** 3;
+
+/**
+ * Blend two views so the point under the stage center travels in a straight
+ * line and the zoom changes geometrically (no wobble).
+ */
+function blendViews(from: StageView, to: StageView, stage: StageSize, t: number): StageView {
+  const cx = stage.width / 2;
+  const cy = stage.height / 2;
+  const fromX = (cx - from.ox) / from.k;
+  const fromY = (cy - from.oy) / from.k;
+  const toX = (cx - to.ox) / to.k;
+  const toY = (cy - to.oy) / to.k;
+  const k = from.k * (to.k / from.k) ** t;
+  const x = fromX + (toX - fromX) * t;
+  const y = fromY + (toY - fromY) * t;
+  return { k, ox: cx - x * k, oy: cy - y * k };
+}
+
+function usePrefersReducedMotion() {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduced(query.matches);
+    const onChange = () => setReduced(query.matches);
+    query.addEventListener("change", onChange);
+    return () => query.removeEventListener("change", onChange);
+  }, []);
+  return reduced;
+}
+
 /**
  * The image stage. In the crop tool it shows the whole image dimmed around
  * the crop frame (drag handles, move, zoom, perspective corners); in every
@@ -64,6 +96,32 @@ export function ImageEditorCanvas({
   const { geometry } = editor;
   const [stage, setStage] = useState<StageSize | null>(null);
   const [frozenView, setFrozenView] = useState<StageView | null>(null);
+  // After a drag, ease from the frozen view to the re-fitted one (Photos-style).
+  const [settle, setSettle] = useState<{ from: StageView; start: number } | null>(null);
+  const [, setFrame] = useState(0);
+  const reducedMotion = usePrefersReducedMotion();
+  const freezeView = (next: StageView | null) => {
+    if (next === null && frozenView && !reducedMotion) {
+      setSettle({ from: frozenView, start: performance.now() });
+    } else if (next !== null) {
+      setSettle(null);
+    }
+    setFrozenView(next);
+  };
+  useEffect(() => {
+    if (!settle) return;
+    let raf = 0;
+    const tick = () => {
+      if (performance.now() - settle.start >= SETTLE_MS) {
+        setSettle(null);
+        return;
+      }
+      setFrame((frame) => frame + 1);
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [settle]);
   const [userView, setUserView] = useState<UserView>(IDENTITY_VIEW);
   const [isDragOver, setIsDragOver] = useState(false);
   const stageRef = editor.stageRef;
@@ -93,6 +151,7 @@ export function ImageEditorCanvas({
     setTrackedKey(viewKey);
     setUserView(IDENTITY_VIEW);
     setFrozenView(null);
+    setSettle(null);
   }
 
   const oriented = geometry.orientedSize;
@@ -104,6 +163,10 @@ export function ImageEditorCanvas({
       // The frame stays put: fit the crop (or, while dragging corners, the
       // whole image) and let the image move and zoom under it.
       view = fitView(isCorners ? geometry.bounds : geometry.crop, oriented, stage, padding * 1.5);
+      if (settle) {
+        const t = Math.min(1, (performance.now() - settle.start) / SETTLE_MS);
+        view = blendViews(settle.from, view, stage, easeOutCubic(t));
+      }
     } else {
       const fit = fitView(geometry.displayRect, oriented, stage, padding);
       view = {
@@ -181,6 +244,7 @@ export function ImageEditorCanvas({
       className={cn("relative h-full min-h-0", className)}
       data-drag-over={isDragOver || undefined}
       data-slot="image-editor-canvas"
+      data-settling={settle ? "" : undefined}
       data-view={isCropView ? "crop" : "result"}
       {...dropProps}
     >
@@ -218,7 +282,7 @@ export function ImageEditorCanvas({
             <CropFrameOverlay
               disabled={editor.disabled}
               geometry={geometry}
-              onFreezeView={setFrozenView}
+              onFreezeView={freezeView}
               stage={stage}
               view={view}
             />
@@ -227,7 +291,7 @@ export function ImageEditorCanvas({
             <CornerHandlesOverlay
               disabled={editor.disabled}
               geometry={geometry}
-              onFreezeView={setFrozenView}
+              onFreezeView={freezeView}
               stage={stage}
               view={view}
             />

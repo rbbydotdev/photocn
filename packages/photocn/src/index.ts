@@ -170,3 +170,15 @@ export {
   serializeRecipe,
 } from "./recipes";
 export type { RecipeV1 } from "./recipes";
+
+export {
+  isLegacyEditorParams,
+  migrateGeometry,
+  normalizeEditorParams,
+} from "./legacy";
+export type {
+  LegacyGeometrySections,
+  NormalizedEditorParams,
+  NormalizeEditorParamsOptions,
+} from "./legacy";
+export { moveCropWithin, orientationFromMatrix } from "./compose";

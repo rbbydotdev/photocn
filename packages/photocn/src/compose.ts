@@ -162,7 +162,7 @@ export function homography(from: Quad, to: Quad): Mat3 {
 // ── Orientation (dihedral group on centered normalized coords) ─────────
 
 /** 2×2 integer matrix [a, b, c, d] = [[a, b], [c, d]]. */
-type Lin2 = [number, number, number, number];
+export type Lin2 = [number, number, number, number];
 
 const ROT_CW: Lin2 = [0, -1, 1, 0];
 const FLIP_H: Lin2 = [-1, 0, 0, 1];
@@ -189,7 +189,8 @@ export function orientationLinear(g: Pick<GeometryParams, "quarterTurns" | "flip
   return mul2(rotation2(g.quarterTurns), g.flipX ? FLIP_H : [1, 0, 0, 1]);
 }
 
-function decomposeOrientation(m: Lin2): Pick<GeometryParams, "quarterTurns" | "flipX"> {
+/** Quarter turns + flip for a dihedral 2×2 matrix on centered normalized coords. */
+export function orientationFromMatrix(m: Lin2): Pick<GeometryParams, "quarterTurns" | "flipX"> {
   for (const flipX of [false, true]) {
     for (const quarterTurns of [0, 1, 2, 3] as const) {
       const candidate = orientationLinear({ quarterTurns, flipX });
@@ -452,7 +453,7 @@ export function sourceToCanvas(g: GeometryParams, source: Size, uv: Vec2): Vec2 
 
 function transformGeometry(g: GeometryParams, G: Lin2): GeometryParams {
   const det = det2(G);
-  const orientation = decomposeOrientation(mul2(G, orientationLinear(g)));
+  const orientation = orientationFromMatrix(mul2(G, orientationLinear(g)));
   // Keystone lives in the warp's bottom row k = (-cx, cy); conjugating by G
   // gives k' = G·k.
   const k = apply2(G, [-g.perspectiveX, g.perspectiveY]);
@@ -536,4 +537,27 @@ export function cropForAspectRatio(
   const center: Vec2 = [current.x + current.width / 2, current.y + current.height / 2];
   const crop = largestRectWithRatio(ratio, imagePolygon(g, source), oriented, center);
   return { ...g, aspectRatio: ratio, crop };
+}
+
+/**
+ * Move `rect` by (dx, dy) (normalized oriented) as far as it can go while
+ * staying inside the warped image.
+ */
+export function moveCropWithin(
+  rect: NormalizedRect,
+  dx: number,
+  dy: number,
+  polygon: Quad,
+  oriented: Size,
+): NormalizedRect {
+  const at = (t: number) => ({ ...rect, x: rect.x + dx * t, y: rect.y + dy * t });
+  if (rectInsidePolygon(at(1), polygon, oriented)) return at(1);
+  let lo = 0;
+  let hi = 1;
+  for (let i = 0; i < 24; i++) {
+    const mid = (lo + hi) / 2;
+    if (rectInsidePolygon(at(mid), polygon, oriented)) lo = mid;
+    else hi = mid;
+  }
+  return at(lo);
 }

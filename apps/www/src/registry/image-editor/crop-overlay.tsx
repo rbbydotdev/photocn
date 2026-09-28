@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, type KeyboardEvent, type PointerEvent } from "react";
+import { useEffect, useRef, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent } from "react";
 import {
   fitRectInPolygon,
   rectInsidePolygon,
@@ -166,6 +166,7 @@ export function CropFrameOverlay({ geometry, view, stage, disabled, onFreezeView
   const polygon = geometry.polygon;
   const drag = useRef<Drag | null>(null);
   const rootRef = useRef<HTMLDivElement | null>(null);
+  const escRef = useRef<((event: KeyboardEvent) => void) | null>(null);
   const wheelRef = useRef<(event: WheelEvent) => void>(() => {});
   useEffect(() => {
     const root = rootRef.current;
@@ -222,6 +223,24 @@ export function CropFrameOverlay({ geometry, view, stage, disabled, onFreezeView
     };
     drag.current = handle ? { kind: "resize", handle, ...common } : { kind: "pan", ...common };
     if (handle) onFreezeView(view);
+    // Esc puts the crop back where the drag started (no undo step).
+    const onKey = (keyEvent: KeyboardEvent) => {
+      if (keyEvent.key !== "Escape" || !drag.current) return;
+      keyEvent.preventDefault();
+      keyEvent.stopPropagation();
+      drag.current = null;
+      geometry.cancel();
+      onFreezeView(null);
+      stopEsc();
+    };
+    stopEsc();
+    escRef.current = onKey;
+    window.addEventListener("keydown", onKey, true);
+  };
+
+  const stopEsc = () => {
+    if (escRef.current) window.removeEventListener("keydown", escRef.current, true);
+    escRef.current = null;
   };
 
   const move = (event: PointerEvent<HTMLElement>) => {
@@ -240,6 +259,7 @@ export function CropFrameOverlay({ geometry, view, stage, disabled, onFreezeView
     const d = drag.current;
     if (!d || d.pointerId !== event.pointerId) return;
     drag.current = null;
+    stopEsc();
     geometry.commit();
     onFreezeView(null);
   };
@@ -259,7 +279,7 @@ export function CropFrameOverlay({ geometry, view, stage, disabled, onFreezeView
     geometry.setCrop(next, { transient: true });
   };
 
-  const onHandleKey = (handle: Handle) => (event: KeyboardEvent<HTMLButtonElement>) => {
+  const onHandleKey = (handle: Handle) => (event: ReactKeyboardEvent<HTMLButtonElement>) => {
     const step = event.shiftKey ? 20 : 4;
     const delta: Record<string, Vec2> = {
       ArrowLeft: [-step, 0],
@@ -344,6 +364,7 @@ export function CornerHandlesOverlay({ geometry, view, stage, disabled, onFreeze
   const oriented = geometry.orientedSize;
   const polygon = geometry.polygon;
   const drag = useRef<{ index: 0 | 1 | 2 | 3; pointerId: number; view: StageView; origin: Vec2 } | null>(null);
+  const cleanupRef = useRef<(() => void) | null>(null);
   if (!oriented || !polygon) return null;
 
   const points = polygon.map((p) => toStage(view, oriented, p)) as Quad;
@@ -355,6 +376,17 @@ export function CornerHandlesOverlay({ geometry, view, stage, disabled, onFreeze
     const rect = event.currentTarget.parentElement!.getBoundingClientRect();
     drag.current = { index, pointerId: event.pointerId, view, origin: [rect.left, rect.top] };
     onFreezeView(view);
+    const onKey = (keyEvent: KeyboardEvent) => {
+      if (keyEvent.key !== "Escape" || !drag.current) return;
+      keyEvent.preventDefault();
+      keyEvent.stopPropagation();
+      drag.current = null;
+      geometry.cancel();
+      onFreezeView(null);
+      window.removeEventListener("keydown", onKey, true);
+    };
+    window.addEventListener("keydown", onKey, true);
+    cleanupRef.current = () => window.removeEventListener("keydown", onKey, true);
   };
   const move = (event: PointerEvent<HTMLButtonElement>) => {
     const d = drag.current;
@@ -365,6 +397,7 @@ export function CornerHandlesOverlay({ geometry, view, stage, disabled, onFreeze
   const end = (event: PointerEvent<HTMLButtonElement>) => {
     if (!drag.current || drag.current.pointerId !== event.pointerId) return;
     drag.current = null;
+    cleanupRef.current?.();
     geometry.commit();
     onFreezeView(null);
   };

@@ -80,7 +80,24 @@ export interface CropPanelProps {
   onEditingCornersChange?: (editing: boolean) => void;
   onResetCorners?: () => void;
   onReset?: () => void;
+  /** Leave the crop tool. Shows a "Done" button when set. */
+  onDone?: () => void;
+  /** Show the keyboard shortcut list. Default `true`. */
+  showShortcuts?: boolean;
 }
+
+/** Keys handled by the editor while the crop tool is active. */
+export const cropShortcuts: readonly [keys: string, action: string][] = [
+  ["R / ⇧R", "Rotate right / left"],
+  ["H · V", "Flip horizontal · vertical"],
+  ["X", "Portrait ⇄ landscape"],
+  ["[ ]", "Straighten ±0.5° (⇧ ±5°)"],
+  ["← → ↑ ↓", "Move the image (⇧ faster)"],
+  ["Scroll", "Zoom inside the frame"],
+  ["Esc", "Cancel a drag / leave corners"],
+  ["⌫", "Reset crop"],
+  ["↵", "Done"],
+];
 
 /**
  * The crop tool's controls: quarter turns, flips, ratio, straighten and
@@ -102,6 +119,8 @@ export function CropPanel({
   onEditingCornersChange,
   onResetCorners,
   onReset,
+  onDone,
+  showShortcuts = true,
 }: CropPanelProps) {
   const id = useId();
   const canToggleOrientation = value.aspectRatio !== "1:1";
@@ -243,6 +262,38 @@ export function CropPanel({
             </FieldSet>
           </>
         )}
+
+        {onDone || showShortcuts ? (
+          <>
+            <Separator />
+            <div className="flex flex-col gap-3 px-4 py-4">
+              {onDone ? (
+                <Button disabled={disabled} onClick={onDone} size="sm" type="button">
+                  Done
+                </Button>
+              ) : null}
+              {showShortcuts ? (
+                <details className="group text-xs text-muted-foreground">
+                  <summary className="cursor-pointer select-none rounded-sm outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring">
+                    Keyboard shortcuts
+                  </summary>
+                  <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+                    {cropShortcuts.map(([keys, action]) => (
+                      <div className="contents" key={keys}>
+                        <dt>
+                          <kbd className="rounded border bg-muted px-1 font-mono text-[11px] text-foreground">
+                            {keys}
+                          </kbd>
+                        </dt>
+                        <dd>{action}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </details>
+              ) : null}
+            </div>
+          </>
+        ) : null}
       </section>
     </TooltipProvider>
   );
@@ -342,6 +393,7 @@ export function ImageEditorCrop(props: ImageEditorCropProps) {
       disabled={editor.disabled || !editor.hasImage}
       onAspectRatioChange={g.setAspectRatio}
       onCommit={g.commit}
+      onDone={g.done}
       onEditingCornersChange={g.setEditingCorners}
       onFlip={g.flip}
       onPerspectiveChange={(value) => g.setPerspective(value, { transient: true })}

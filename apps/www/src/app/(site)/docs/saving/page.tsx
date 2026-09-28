@@ -35,6 +35,14 @@ export default function SavingPage() {
         </P>
         <ComponentPreview name="controlled" />
       </Section>
+      <Section title="Sessions saved by older versions">
+        <P>
+          Params from before the geometry rewrite are migrated automatically when you pass them to{" "}
+          <code>defaultParams</code> or <code>setParams</code>. Rotation, flips, crop, zoom and perspective
+          all carry over. To convert them yourself, call <code>normalizeEditorParams(saved)</code> from{" "}
+          <code>photocn</code>.
+        </P>
+      </Section>
     </DocsPage>
   );
 }

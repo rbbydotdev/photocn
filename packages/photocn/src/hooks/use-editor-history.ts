@@ -37,6 +37,10 @@ export interface UseEditorHistoryResult {
   setParams: (next: EditorParams) => void;
   /** Push any pending transient state to the undo stack. No-op if nothing transient is pending. */
   commit: () => void;
+  /** Throw away a pending transient batch (e.g. Esc during a drag). */
+  revert: () => void;
+  /** Replace the params without an undo entry (e.g. migrating a loaded session). */
+  load: (next: EditorParams) => void;
   /** Restore default params, push a history entry. */
   reset: () => void;
   undo: () => void;
@@ -61,6 +65,8 @@ type HistoryAction =
   | { type: "set-section-skipped"; section: EditorParamSection; skipped: boolean }
   | { type: "replace"; next: EditorParams }
   | { type: "commit" }
+  | { type: "revert" }
+  | { type: "load"; next: EditorParams }
   | { type: "reset" }
   | { type: "undo" }
   | { type: "redo" };
@@ -136,6 +142,20 @@ function makeReducer(limit: number) {
           params: state.params,
           past: pushPast(state.past, state.pendingBaseline, limit),
           future: [],
+          pendingBaseline: null,
+        };
+      }
+
+      case "revert": {
+        if (!state.pendingBaseline) return state;
+        return { ...state, params: state.pendingBaseline, pendingBaseline: null };
+      }
+
+      case "load": {
+        return {
+          params: cloneEditorParams(action.next),
+          past: state.past,
+          future: state.future,
           pendingBaseline: null,
         };
       }
@@ -235,6 +255,14 @@ export function useEditorHistory(
     dispatch({ type: "reset" });
   }, []);
 
+  const revert = useCallback(() => {
+    dispatch({ type: "revert" });
+  }, []);
+
+  const load = useCallback((next: EditorParams) => {
+    dispatch({ type: "load", next });
+  }, []);
+
   const undo = useCallback(() => {
     dispatch({ type: "undo" });
   }, []);
@@ -249,6 +277,8 @@ export function useEditorHistory(
     setSectionSkipped: setSectionSkippedCallback,
     setParams,
     commit,
+    revert,
+    load,
     reset,
     undo,
     redo,

@@ -71,3 +71,32 @@ Coordinates are normalized (0–1) in the **oriented frame**: the image after fl
 | Vertical / Horizontal sliders | keystone under the fixed frame, auto-zoom |
 | ⟲ / ⟳ | quarter turn of the whole picture |
 | Flip | mirror what you see |
+| Release a handle | the view eases (240 ms) to re-fit the new crop; instant with reduced motion |
+
+### Keyboard (crop tool active, focus not in a text field)
+
+| Keys | Action |
+| --- | --- |
+| R / ⇧R | rotate right / left |
+| H · V | flip horizontal · vertical |
+| X | portrait ⇄ landscape |
+| [ · ] | straighten −/+0.5° (⇧ ±5°) |
+| ← → ↑ ↓ | move the image under the frame (⇧ ×10) |
+| Esc | cancel the drag in progress (no undo step) · leave corner mode |
+| ⌫ / Delete | reset geometry |
+| ↵ | done: back to the previous tool |
+| ⌘Z / ⇧⌘Z | undo / redo (every tool) |
+
+Arrows, Enter and ⌫ are left alone while a slider, button or menu has focus. The logic is `handleCropKey` in `photocn/react`, so headless UIs get the same shortcuts.
+
+## Loading older params
+
+Params saved before this model had separate `trs`, `crop`, `perspective2` and `resizer` sections. `normalizeEditorParams()` (used automatically by `defaultParams` and `setParams`) converts them:
+
+- `crop.canvas_angle + trs.angle` → quarter turns + a ±45° straighten (positive = clockwise, as the old UI showed it)
+- `trs.fliph` / `trs.flipv` → orientation (a vertical flip is a horizontal flip plus a half turn)
+- `crop.appliedCrop` (pixels) → normalized crop, once the image size is known (applied without an undo step)
+- `trs.scale` (zoom) → a proportionally smaller, centered crop
+- `perspective2.before/after` → the `corners` quad
+- `crop.ar` → `aspectRatio`
+- `resizer` → returned as `outputSize`, since resizing is now an export option

@@ -1,6 +1,6 @@
 export { ImageEditorProvider, useImageEditor, useOptionalImageEditor } from "./context";
 export type { ImageEditorProviderProps } from "./context";
-export { resolveOutputSize, useImageEditorState } from "./use-image-editor-state";
+export { handleCropKey, resolveOutputSize, useImageEditorState } from "./use-image-editor-state";
 export type {
   ImageEditorApi,
   ImageEditorExportFormat,

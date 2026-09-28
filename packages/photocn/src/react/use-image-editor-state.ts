@@ -19,6 +19,7 @@ import {
   flipGeometry,
   imagePolygon,
   isGeometryDefault,
+  moveCropWithin,
   orientedSize,
   outputPixelSize,
   polygonBounds,
@@ -41,6 +42,7 @@ import {
   type SelectImageFileOptions,
 } from "../dom";
 import { applyRecipe, buildRecipe, type RecipeV1 } from "../recipes";
+import { normalizeEditorParams } from "../legacy";
 import {
   filterPresets as defaultFilterPresets,
   findFilterPreset,
@@ -118,8 +120,12 @@ export interface UseImageEditorStateOptions {
   src?: ImageEditorSource | null;
   /** Decode hints (name/type) used when `src` is a Blob/ArrayBuffer. */
   decodeOptions?: DecodeImageInputOptions;
-  /** Params to start from (e.g. a saved edit). Uncontrolled. */
-  defaultParams?: EditorParams;
+  /**
+   * Params to start from (e.g. a saved edit). Uncontrolled. Params saved by
+   * older versions (separate `trs`/`crop`/`perspective2` sections) are
+   * migrated automatically.
+   */
+  defaultParams?: EditorParams | Record<string, unknown>;
   /** Called after every edit with the full params snapshot. */
   onParamsChange?: (params: EditorParams) => void;
   /** Controlled active tool. */
@@ -206,6 +212,12 @@ export interface ImageEditorGeometryApi {
   setEditingCorners: (editing: boolean) => void;
   /** Flush pending transient edits (e.g. on pointer up). */
   commit: () => void;
+  /** Throw away an in-progress drag (Esc). */
+  cancel: () => void;
+  /** Move the crop by (dx, dy) normalized, as far as the image allows. */
+  moveCrop: (dx: number, dy: number, options?: TransientOption) => void;
+  /** Leave the crop tool (back to the previous tool). */
+  done: () => void;
   /** Reset geometry only. */
   reset: () => void;
   /**
@@ -223,8 +235,8 @@ export interface ImageEditorApi {
   params: EditorParams;
   /** Params actually sent to the renderer (compare / crop view aware). */
   renderParams: EditorParams;
-  /** Replace all params (one undo step). */
-  setParams: (params: EditorParams) => void;
+  /** Replace all params (one undo step). Legacy params are migrated. */
+  setParams: (params: EditorParams | Record<string, unknown>) => void;
   /**
    * Patch one params section. `transient: true` coalesces rapid updates
    * (slider drags) into a single undo step.
@@ -415,17 +427,22 @@ export function useImageEditorState(
     cropTool = "compose",
   } = options;
 
+  const [initial] = useState(() => normalizeEditorParams(defaultParams));
   const {
     params,
     patchSection,
     setParams: setHistoryParams,
     commit,
+    revert,
+    load: loadParams,
     reset,
     undo,
     redo,
     canUndo,
     canRedo,
-  } = useEditorHistory({ initialParams: defaultParams, limit: historyLimit });
+  } = useEditorHistory({ initialParams: initial.params, limit: historyLimit });
+  // A legacy pixel crop can only be converted once the image size is known.
+  const pendingLegacyRef = useRef(initial.needsSourceSize ? defaultParams : null);
 
   const [tool, setTool] = useControllableState<ImageEditorToolId>({
     value: toolProp,
@@ -434,6 +451,10 @@ export function useImageEditorState(
   });
   const isCropTool = tool === cropTool;
   const [editingCorners, setEditingCorners] = useState(false);
+  const previousToolRef = useRef<ImageEditorToolId>(
+    defaultTool === cropTool ? "adjust" : defaultTool,
+  );
+  if (!isCropTool) previousToolRef.current = tool;
 
   // ── Hold-to-compare: original colors, same geometry ─────────────────
   const [isComparing, setIsComparing] = useState(false);
@@ -515,6 +536,8 @@ export function useImageEditorState(
     const height = image?.naturalHeight || image?.height || 0;
     return width > 0 && height > 0 ? { width, height } : null;
   }, [image]);
+  const sourceRef = useRef(sourceSize);
+  sourceRef.current = sourceSize;
 
   // ── Commit plumbing ────────────────────────────────────────────────────
   // Slider drags patch transiently and schedule a debounced commit so a whole
@@ -574,8 +597,9 @@ export function useImageEditorState(
     emit(next);
   };
 
-  const setParams = (next: EditorParams) => {
+  const setParams = (input: EditorParams | Record<string, unknown>) => {
     flushCommit();
+    const next = normalizeEditorParams(input, { sourceSize: sourceRef.current }).params;
     setHistoryParams(next);
     emit(next);
   };
@@ -606,8 +630,13 @@ export function useImageEditorState(
   const geometry = params.geometry;
   const geometryRef = useRef(geometry);
   geometryRef.current = geometry;
-  const sourceRef = useRef(sourceSize);
-  sourceRef.current = sourceSize;
+
+  useEffect(() => {
+    const pending = pendingLegacyRef.current;
+    if (!pending || !sourceSize) return;
+    pendingLegacyRef.current = null;
+    loadParams(normalizeEditorParams(pending, { sourceSize }).params);
+  }, [sourceSize, loadParams]);
 
   const derived = useMemo(() => {
     if (!sourceSize) {
@@ -714,6 +743,30 @@ export function useImageEditorState(
     editingCorners: isCropTool && editingCorners,
     setEditingCorners,
     commit: flushCommit,
+    cancel: () => {
+      if (commitTimerRef.current !== null) {
+        clearTimeout(commitTimerRef.current);
+        commitTimerRef.current = null;
+      }
+      revert();
+    },
+    moveCrop: (dx, dy, opts) =>
+      withSource((source) => {
+        const g = geometryRef.current;
+        const oriented = orientedSize(source, g);
+        const crop = moveCropWithin(
+          effectiveCrop(g, source),
+          dx,
+          dy,
+          imagePolygon(g, source),
+          oriented,
+        );
+        setGeometry({ ...g, crop }, opts);
+      }),
+    done: () => {
+      setEditingCorners(false);
+      setTool(previousToolRef.current);
+    },
     reset: () => {
       setEditingCorners(false);
       setGeometry(createGeometry());
@@ -841,6 +894,8 @@ export function useImageEditorState(
       undo();
     },
     redo,
+    onKey: (event) =>
+      isCropTool && sourceRef.current ? handleCropKey(event, geometryApi) : false,
   });
 
   const status: ImageEditorStatus =
@@ -992,6 +1047,71 @@ export function useImageEditorState(
     engine,
     worker,
   };
+}
+
+const INTERACTIVE =
+  'button,a,input,select,textarea,[role="slider"],[role="combobox"],[role="option"],[role="radio"],[role="tab"],[role="menuitem"],[role="switch"]';
+
+/**
+ * Crop tool shortcuts (docs/compose.md):
+ * R / ⇧R rotate · H / V flip · X portrait⇄landscape · [ ] straighten (⇧ ×10)
+ * arrows move the image under the frame (⇧ ×10) · ⌫ reset · Enter done ·
+ * Esc leaves corner mode.
+ */
+export function handleCropKey(event: KeyboardEvent, g: ImageEditorGeometryApi): boolean {
+  const target = event.target instanceof Element ? event.target : null;
+  const onControl = Boolean(target?.closest(INTERACTIVE));
+  const big = event.shiftKey;
+  switch (event.key.toLowerCase()) {
+    case "r":
+      g.rotate(big ? -1 : 1);
+      return true;
+    case "h":
+      g.flip("horizontal");
+      return true;
+    case "v":
+      g.flip("vertical");
+      return true;
+    case "x":
+      g.toggleOrientation();
+      return true;
+    case "[":
+    case "{":
+      g.setStraighten(g.value.straighten - (big ? 5 : 0.5), { transient: true });
+      return true;
+    case "]":
+    case "}":
+      g.setStraighten(g.value.straighten + (big ? 5 : 0.5), { transient: true });
+      return true;
+    case "escape":
+      if (!g.editingCorners) return false;
+      g.setEditingCorners(false);
+      return true;
+  }
+  if (onControl) return false;
+  const step = big ? 0.1 : 0.01;
+  // Arrows move the image, so the crop moves the other way.
+  const arrows: Record<string, [number, number]> = {
+    ArrowLeft: [step, 0],
+    ArrowRight: [-step, 0],
+    ArrowUp: [0, step],
+    ArrowDown: [0, -step],
+  };
+  const arrow = arrows[event.key];
+  if (arrow) {
+    g.moveCrop(arrow[0] * g.crop.width, arrow[1] * g.crop.height, { transient: true });
+    return true;
+  }
+  if (event.key === "Backspace" || event.key === "Delete") {
+    g.reset();
+    return true;
+  }
+  if (event.key === "Enter") {
+    g.commit();
+    g.done();
+    return true;
+  }
+  return false;
 }
 
 function clamp1(value: number): number {

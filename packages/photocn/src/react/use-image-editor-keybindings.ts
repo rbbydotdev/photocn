@@ -7,6 +7,11 @@ export interface UseImageEditorKeybindingsOptions {
   undo: () => void;
   redo: () => void;
   onEscape?: () => void;
+  /**
+   * Tool-specific single-key shortcuts (no ⌘/Ctrl/Alt). Return `true` when
+   * handled. Runs only for the active editor, never inside text inputs.
+   */
+  onKey?: (event: KeyboardEvent) => boolean;
 }
 
 const mounted = new Set<RefObject<HTMLElement | null>>();
@@ -37,9 +42,10 @@ export function useImageEditorKeybindings({
   undo,
   redo,
   onEscape,
+  onKey,
 }: UseImageEditorKeybindingsOptions): void {
-  const handlers = useRef({ undo, redo, onEscape });
-  handlers.current = { undo, redo, onEscape };
+  const handlers = useRef({ undo, redo, onEscape, onKey });
+  handlers.current = { undo, redo, onEscape, onKey };
 
   useEffect(() => {
     if (!enabled) return;
@@ -58,6 +64,16 @@ export function useImageEditorKeybindings({
       if (event.key === "Escape" && handlers.current.onEscape) {
         event.preventDefault();
         handlers.current.onEscape();
+        return;
+      }
+      if (
+        !event.metaKey &&
+        !event.ctrlKey &&
+        !event.altKey &&
+        !event.defaultPrevented &&
+        handlers.current.onKey?.(event)
+      ) {
+        event.preventDefault();
         return;
       }
       if (!(event.metaKey || event.ctrlKey)) return;

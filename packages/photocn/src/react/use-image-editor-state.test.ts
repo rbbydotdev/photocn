@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createMatrixPreset } from "../filters";
 import { adjustDefaultValue } from "./types";
-import { resolveOutputSize, useImageEditorState } from "./use-image-editor-state";
+import { handleCropKey, resolveOutputSize, useImageEditorState } from "./use-image-editor-state";
 
 // No image is loaded, so no renderer is created: this exercises the pure
 // state/API layer only.
@@ -143,5 +143,137 @@ describe("resolveOutputSize (export resize)", () => {
   it("uses both sides when given and caps huge sizes", () => {
     expect(resolveOutputSize(crop, { width: 640, height: 640 })).toEqual({ width: 640, height: 640 });
     expect(resolveOutputSize(crop, { width: 100000 }).width).toBe(16384);
+  });
+});
+
+describe("crop tool shortcuts", () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  const press = (key: string, init: KeyboardEventInit = {}) =>
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true, ...init }));
+    });
+
+  it("ignores single-key shortcuts outside the crop tool", () => {
+    const { result } = setup({ defaultTool: "adjust" });
+    press("r");
+    expect(result.current.params.geometry.quarterTurns).toBe(0);
+  });
+
+  it("does nothing until an image is loaded", () => {
+    const { result } = setup({ defaultTool: "compose" });
+    press("r");
+    expect(result.current.params.geometry.quarterTurns).toBe(0);
+  });
+});
+
+describe("handleCropKey", () => {
+  const api = () => {
+    const calls: string[] = [];
+    const g = {
+      value: { straighten: 2 },
+      editingCorners: false,
+      crop: { x: 0, y: 0, width: 0.5, height: 0.5 },
+      rotate: (d: number) => calls.push(`rotate:${d}`),
+      flip: (a: string) => calls.push(`flip:${a}`),
+      toggleOrientation: () => calls.push("orientation"),
+      setStraighten: (v: number) => calls.push(`straighten:${v}`),
+      setEditingCorners: (v: boolean) => calls.push(`corners:${v}`),
+      moveCrop: (dx: number, dy: number) => calls.push(`move:${dx},${dy}`),
+      reset: () => calls.push("reset"),
+      commit: () => calls.push("commit"),
+      done: () => calls.push("done"),
+    };
+    return { g: g as unknown as Parameters<typeof handleCropKey>[1], calls };
+  };
+  const key = (k: string, init: KeyboardEventInit = {}, target?: Element) => {
+    const event = new KeyboardEvent("keydown", { key: k, ...init });
+    if (target) Object.defineProperty(event, "target", { value: target });
+    return event;
+  };
+
+  it("maps keys to geometry actions", () => {
+    const { g, calls } = api();
+    for (const [k, init] of [
+      ["r", {}],
+      ["R", { shiftKey: true }],
+      ["h", {}],
+      ["v", {}],
+      ["x", {}],
+      ["]", {}],
+      ["{", { shiftKey: true }],
+      ["ArrowRight", {}],
+      ["ArrowUp", { shiftKey: true }],
+      ["Backspace", {}],
+      ["Enter", {}],
+    ] as const) {
+      expect(handleCropKey(key(k, init), g)).toBe(true);
+    }
+    expect(calls).toEqual([
+      "rotate:1",
+      "rotate:-1",
+      "flip:horizontal",
+      "flip:vertical",
+      "orientation",
+      "straighten:2.5",
+      "straighten:-3",
+      "move:-0.005,0",
+      "move:0,0.05",
+      "reset",
+      "commit",
+      "done",
+    ]);
+  });
+
+  it("leaves arrows, Enter and Backspace to focused controls", () => {
+    const { g, calls } = api();
+    const slider = document.createElement("span");
+    slider.setAttribute("role", "slider");
+    expect(handleCropKey(key("ArrowLeft", {}, slider), g)).toBe(false);
+    expect(handleCropKey(key("Enter", {}, document.createElement("button")), g)).toBe(false);
+    expect(calls).toEqual([]);
+  });
+
+  it("Esc leaves corner mode, otherwise falls through", () => {
+    const { g, calls } = api();
+    expect(handleCropKey(key("Escape"), g)).toBe(false);
+    (g as { editingCorners: boolean }).editingCorners = true;
+    expect(handleCropKey(key("Escape"), g)).toBe(true);
+    expect(calls).toEqual(["corners:false"]);
+  });
+});
+
+describe("geometry.cancel and legacy params", () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it("cancel throws away an in-progress drag without an undo step", () => {
+    const { result } = setup();
+    act(() => result.current.geometry.setStraighten(5));
+    act(() => result.current.geometry.setCrop({ x: 0.1, y: 0.1, width: 0.5, height: 0.5 }, { transient: true }));
+    act(() => result.current.geometry.cancel());
+    expect(result.current.params.geometry.crop).toBeNull();
+    expect(result.current.params.geometry.straighten).toBe(5);
+    act(() => vi.advanceTimersByTime(1000));
+    act(() => result.current.history.undo());
+    expect(result.current.params.geometry.straighten).toBe(0);
+    expect(result.current.history.canUndo).toBe(false);
+  });
+
+  it("migrates legacy defaultParams and setParams", () => {
+    const legacy = {
+      trs: { angle: 12, scale: 0, fliph: 1, flipv: 0 },
+      crop: { canvas_angle: 90, appliedCrop: 0 },
+      lights: { exposure: 0.25 },
+    };
+    const { result } = setup({ defaultParams: legacy });
+    expect(result.current.params.geometry).toMatchObject({ quarterTurns: 1, flipX: true, straighten: 12 });
+    expect(result.current.params.lights.exposure).toBe(0.25);
+    expect(result.current.history.canUndo).toBe(false);
+
+    act(() => result.current.setParams({ trs: { angle: -30 }, crop: { canvas_angle: 0 } }));
+    expect(result.current.params.geometry.straighten).toBe(-30);
+    expect(result.current.params).not.toHaveProperty("trs");
   });
 });
