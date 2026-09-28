@@ -1,0 +1,96 @@
+import { Shader } from '../minigl.js'
+
+type ShaderHandle = {
+    drawRect: (...args: any[]) => void
+    uniforms: (uniforms?: Uniforms) => void
+}
+
+type ShaderConstructor = new (
+    gl: WebGL2RenderingContext,
+    vertexSrc?: string | null,
+    fragmentSrc?: string | null,
+) => ShaderHandle
+
+type UniformValue = number | number[] | { unit: number }
+type Uniforms = Record<string, UniformValue>
+
+type FilterCache = {
+    $lensblur?: ShaderHandle
+}
+
+type MiniGLFilterHost = {
+    gl: WebGL2RenderingContext
+    _: FilterCache
+    runFilter: (shader: ShaderHandle, uniforms?: Uniforms | null) => void
+}
+
+type BokehBlurParams = Partial<{
+    bokehstrength: number
+    bokehlensin: number
+    bokehlensout: number
+    centerX: number
+    centerY: number
+}>
+
+const ShaderCtor = Shader as unknown as ShaderConstructor
+
+export function filterBlurBokeh(mini: MiniGLFilterHost, params?: BokehBlurParams | null) {
+    const _fragment = `#version 300 es
+        //Bokeh disc. by David Hoskins.
+        //https://www.shadertoy.com/view/4d2Xzw
+        precision highp float;
+
+        in vec2 texCoord;
+        uniform sampler2D _texture;
+        out vec4 outColor;
+
+        uniform float bokehstrength;
+        uniform float bokehlensin;
+        uniform float bokehlensout;
+        uniform float centerX;
+        uniform float centerY;
+
+        #define GOLDEN_ANGLE 2.39996323
+        #define ITERATIONS 512
+        const mat2 rot = mat2(cos(GOLDEN_ANGLE), sin(GOLDEN_ANGLE), -sin(GOLDEN_ANGLE), cos(GOLDEN_ANGLE));
+        vec3 Bokeh(sampler2D tex, vec2 uv, float radius)
+        {
+          vec3 acc = vec3(0), div = acc;
+            float r = 1.;
+            vec2 vangle = vec2(0.0,radius*.01 / sqrt(float(ITERATIONS)));
+            
+          for (int j = 0; j < ITERATIONS; j++)
+            {  
+                // the approx increase in the scale of sqrt(0, 1, 2, 3...)
+                r += 1. / r;
+              vangle = rot * vangle;
+                vec3 col = texture(tex, uv + (r-1.) * vangle).xyz; /// ... Sample the image
+                //col = col * col *1.8; // ... Contrast it for better highlights - leave this out elsewhere.
+            vec3 bokeh = pow(col, vec3(4));
+            acc += col * bokeh;
+            div += bokeh;
+          }
+          return acc / div;
+        }
+
+
+        void main() {
+            vec4 color = texture(_texture, texCoord);
+            vec4 bcolor = vec4(Bokeh(_texture, texCoord, bokehstrength), 1.);
+    
+            //vignette used to control alpha
+            //to blur inside circle smoothstep(lensin, lensout, dist)
+            //to blur outside circle smoothstep(lensout, lensin, dist)
+            float dist = distance(texCoord.xy, vec2(centerX,centerY));
+            float vigfin = pow(1.-smoothstep(max(0.001,bokehlensout), bokehlensin, dist),2.);
+
+            outColor = mix( color, bcolor, vigfin);
+        }
+      `
+
+    const {gl}=mini
+    let { bokehstrength=0.5, bokehlensin=0, bokehlensout=0.5, centerX=0, centerY=0} = params || {}
+    //setup and run effect
+    mini._.$lensblur = mini._.$lensblur || new ShaderCtor(gl, null, _fragment);
+    mini.runFilter(mini._.$lensblur, {bokehstrength,bokehlensin,bokehlensout,centerX,centerY} )
+}

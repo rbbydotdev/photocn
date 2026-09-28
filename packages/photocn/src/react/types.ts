@@ -1,0 +1,161 @@
+import type { CurveChannels, EditorCropRect } from "../editor-params";
+
+/**
+ * Tools the built-in editor knows how to show. Custom UIs are free to ignore
+ * this list — `tool` is plain state and accepts any string.
+ */
+export type ImageEditorToolId =
+  | "adjust"
+  | "compose"
+  | "curves"
+  | "effects"
+  | "filters"
+  | "blender"
+  | "blur"
+  | "metadata"
+  | (string & {});
+
+export interface AdjustLightValue {
+  brightness: number;
+  exposure: number;
+  gamma: number;
+  contrast: number;
+  shadows: number;
+  highlights: number;
+  bloom: number;
+}
+
+export interface AdjustColorValue {
+  temperature: number;
+  tint: number;
+  vibrance: number;
+  saturation: number;
+  sepia: number;
+}
+
+export interface AdjustEffectValue {
+  clarity: number;
+  noise: number;
+  vignette: number;
+}
+
+export interface AdjustValue {
+  lights: AdjustLightValue;
+  colors: AdjustColorValue;
+  effects: AdjustEffectValue;
+}
+
+export type AdjustSection = keyof AdjustValue;
+
+export const adjustDefaultValue: AdjustValue = {
+  lights: {
+    brightness: 0,
+    exposure: 0,
+    gamma: 0,
+    contrast: 0,
+    shadows: 0,
+    highlights: 0,
+    bloom: 0,
+  },
+  colors: {
+    temperature: 0,
+    tint: 0,
+    vibrance: 0,
+    saturation: 0,
+    sepia: 0,
+  },
+  effects: {
+    clarity: 0,
+    noise: 0,
+    vignette: 0,
+  },
+};
+
+export interface BlurValue {
+  bokehStrength: number;
+  bokehLensOut: number;
+  gaussianStrength: number;
+  gaussianLensOut: number;
+  /** Focus center, normalized 0..1. */
+  centerX: number;
+  /** Focus center, normalized 0..1. */
+  centerY: number;
+}
+
+export const blurDefaultValue: BlurValue = {
+  bokehStrength: 0,
+  bokehLensOut: 0.5,
+  gaussianStrength: 0,
+  gaussianLensOut: 0.5,
+  centerX: 0.5,
+  centerY: 0.5,
+};
+
+export function isBlurValueDefault(value: BlurValue): boolean {
+  return (
+    value.bokehStrength === blurDefaultValue.bokehStrength &&
+    value.bokehLensOut === blurDefaultValue.bokehLensOut &&
+    value.gaussianStrength === blurDefaultValue.gaussianStrength &&
+    value.gaussianLensOut === blurDefaultValue.gaussianLensOut &&
+    value.centerX === blurDefaultValue.centerX &&
+    value.centerY === blurDefaultValue.centerY
+  );
+}
+
+export interface FiltersValue {
+  /** Label of the active preset, or `null` when no filter is applied. */
+  label: string | null;
+  /** Filter strength, 0..1. */
+  mix: number;
+}
+
+export interface BlendValue {
+  /** Blend strength, 0..1. */
+  blendMix: number;
+}
+
+export interface CropTransformValue {
+  /** Degrees, -180..180. */
+  rotation: number;
+  /** Percent, 100 = fit. */
+  scale: number;
+  flipHorizontal: boolean;
+  flipVertical: boolean;
+}
+
+export interface ResizeValue {
+  width: number;
+  height: number;
+  originalWidth: number;
+  originalHeight: number;
+}
+
+export interface ResizeChange {
+  width: number;
+  height: number;
+  /** Keep the image aspect ratio; the untouched edge is derived. */
+  locked: boolean;
+}
+
+export interface AspectRatioOption {
+  value: string;
+  label: string;
+}
+
+export const aspectRatioOptions = [
+  { value: "free", label: "Free" },
+  { value: "original", label: "Original" },
+  { value: "1:1", label: "1:1" },
+  { value: "4:5", label: "4:5" },
+  { value: "16:9", label: "16:9" },
+] as const satisfies readonly AspectRatioOption[];
+
+export type { CurveChannels, EditorCropRect };
+
+/** Crop rectangle in stage-percent coordinates (0..100 on both axes). */
+export type CropRect = EditorCropRect;
+
+export interface ViewTransform {
+  zoom: number;
+  rotation: number;
+}

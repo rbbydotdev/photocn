@@ -1,0 +1,157 @@
+import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
+
+import { createMiniGlEditor } from "../dom";
+import type {
+  EditorColorSpace,
+  EditorRenderer,
+  LoadableImage,
+} from "..";
+
+import { useLatestRef } from "./use-latest-ref";
+
+export type MiniGlEditorImage = LoadableImage;
+
+export interface MiniGlEditorInstance<TRenderer = EditorRenderer> {
+  renderer: TRenderer;
+  dispose?: () => void;
+}
+
+export interface CreateMiniGlEditorOptions<TImage = MiniGlEditorImage> {
+  canvas: HTMLCanvasElement;
+  image: TImage;
+  colorspace: EditorColorSpace;
+}
+
+export type CreateMiniGlEditor<
+  TRenderer = EditorRenderer,
+  TEditor extends MiniGlEditorInstance<TRenderer> = MiniGlEditorInstance<TRenderer>,
+  TImage = MiniGlEditorImage,
+> = (
+  options: CreateMiniGlEditorOptions<TImage>,
+) => TEditor | Promise<TEditor>;
+
+export interface MiniGlEditorReady<
+  TRenderer = EditorRenderer,
+  TEditor extends MiniGlEditorInstance<TRenderer> = MiniGlEditorInstance<TRenderer>,
+> {
+  canvas: HTMLCanvasElement;
+  editor: TEditor;
+  renderer: TRenderer;
+}
+
+export interface UseMiniGlEditorOptions<
+  TRenderer = EditorRenderer,
+  TEditor extends MiniGlEditorInstance<TRenderer> = MiniGlEditorInstance<TRenderer>,
+  TImage = MiniGlEditorImage,
+> {
+  image?: TImage | null;
+  colorspace?: EditorColorSpace;
+  createEditor?: CreateMiniGlEditor<TRenderer, TEditor, TImage>;
+  onReady?: (ready: MiniGlEditorReady<TRenderer, TEditor>) => void;
+  onError?: (error: unknown) => void;
+}
+
+export interface UseMiniGlEditorResult<
+  TRenderer = EditorRenderer,
+  TEditor extends MiniGlEditorInstance<TRenderer> = MiniGlEditorInstance<TRenderer>,
+> {
+  canvasRef: RefObject<HTMLCanvasElement | null>;
+  editor: TEditor | null;
+  renderer: TRenderer | null;
+  status: MiniGlEditorStatus;
+  error: unknown;
+  isReady: boolean;
+}
+
+export type MiniGlEditorStatus = "idle" | "loading" | "ready" | "error";
+
+export function useMiniGlEditor<
+  TRenderer = EditorRenderer,
+  TEditor extends MiniGlEditorInstance<TRenderer> = MiniGlEditorInstance<TRenderer>,
+  TImage = MiniGlEditorImage,
+>({
+  image,
+  colorspace = "srgb",
+  createEditor,
+  onReady,
+  onError,
+}: UseMiniGlEditorOptions<TRenderer, TEditor, TImage>): UseMiniGlEditorResult<
+  TRenderer,
+  TEditor
+> {
+  // Memoize editorFactory so that an inline createEditor prop doesn't flip
+  // the effect's dep on every parent render (which would dispose + recreate
+  // the editor unnecessarily).
+  const editorFactory = useMemo(
+    () =>
+      createEditor ??
+      (createMiniGlEditor as unknown as CreateMiniGlEditor<TRenderer, TEditor, TImage>),
+    [createEditor],
+  );
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const onReadyRef = useLatestRef(onReady);
+  const onErrorRef = useLatestRef(onError);
+  const [editor, setEditor] = useState<TEditor | null>(null);
+  const renderer = useMemo<TRenderer | null>(
+    () => editor?.renderer ?? null,
+    [editor],
+  );
+  const [status, setStatus] = useState<MiniGlEditorStatus>("idle");
+  const [error, setError] = useState<unknown>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    let disposed = false;
+    let activeEditor: TEditor | null = null;
+
+    setEditor(null);
+    setError(null);
+
+    if (!canvas || !image) {
+      setStatus("idle");
+      return () => {
+        disposed = true;
+      };
+    }
+
+    setStatus("loading");
+
+    void Promise.resolve(editorFactory({ canvas, image, colorspace }))
+      .then((nextEditor) => {
+        if (disposed) {
+          nextEditor.dispose?.();
+          return;
+        }
+
+        activeEditor = nextEditor;
+        setEditor(nextEditor);
+        setStatus("ready");
+        onReadyRef.current?.({
+          canvas,
+          editor: nextEditor,
+          renderer: nextEditor.renderer,
+        });
+      })
+      .catch((nextError: unknown) => {
+        if (!disposed) {
+          setError(nextError);
+          setStatus("error");
+          onErrorRef.current?.(nextError);
+        }
+      });
+
+    return () => {
+      disposed = true;
+      activeEditor?.dispose?.();
+    };
+  }, [colorspace, editorFactory, image]);
+
+  return {
+    canvasRef,
+    editor,
+    renderer,
+    status,
+    error,
+    isReady: status === "ready",
+  };
+}

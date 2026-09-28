@@ -1,0 +1,22 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "image-editor-histogram",
+  "title": "Histogram",
+  "description": "Live RGB histogram of the rendered image.",
+  "dependencies": [
+    "photocn@^0.1.0"
+  ],
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "src/registry/image-editor/histogram.tsx",
+      "content": "\"use client\";\n\nimport { useImageEditor } from \"photocn/react\";\n\nimport { cn } from \"@/lib/utils\";\n\nexport interface ImageEditorHistogramProps {\n  className?: string;\n  /** Show the \"Histogram\" label and pixel count. Default `true`. */\n  showHeader?: boolean;\n}\n\n/** Live RGB histogram of the rendered image (computed off-thread). */\nexport function ImageEditorHistogram({\n  className,\n  showHeader = true,\n}: ImageEditorHistogramProps) {\n  const editor = useImageEditor();\n  const pixels = editor.histogram.data?.pixels;\n  return (\n    <div className={cn(\"flex flex-col gap-1\", className)} data-slot=\"image-editor-histogram\">\n      {showHeader ? (\n        <div className=\"flex items-center justify-between text-[10px] uppercase tracking-wider text-muted-foreground\">\n          <span>Histogram</span>\n          <span className=\"font-mono normal-case tracking-normal tabular-nums\">\n            {pixels ? pixels.toLocaleString() : \"—\"}\n          </span>\n        </div>\n      ) : null}\n      <canvas\n        aria-hidden=\"true\"\n        className=\"block h-16 w-full rounded-sm bg-background/60\"\n        height={64}\n        ref={editor.histogram.canvasRef}\n        width={256}\n      />\n    </div>\n  );\n}\n",
+      "type": "registry:component",
+      "target": "components/image-editor/histogram.tsx"
+    }
+  ],
+  "categories": [
+    "image-editor"
+  ],
+  "type": "registry:component"
+}

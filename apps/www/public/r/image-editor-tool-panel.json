@@ -1,0 +1,30 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "image-editor-tool-panel",
+  "title": "Tool Panel",
+  "description": "Renders the panel for the active tool; swap or add panels per tool.",
+  "dependencies": [
+    "photocn@^0.1.0"
+  ],
+  "registryDependencies": [
+    "http://localhost:3100/r/image-editor-adjustments.json",
+    "http://localhost:3100/r/image-editor-blend.json",
+    "http://localhost:3100/r/image-editor-blur.json",
+    "http://localhost:3100/r/image-editor-crop.json",
+    "http://localhost:3100/r/image-editor-curves.json",
+    "http://localhost:3100/r/image-editor-filters.json",
+    "http://localhost:3100/r/image-editor-metadata.json"
+  ],
+  "files": [
+    {
+      "path": "src/registry/image-editor/tool-panel.tsx",
+      "content": "\"use client\";\n\nimport type { ReactNode } from \"react\";\nimport { useImageEditor, type ImageEditorToolId } from \"photocn/react\";\n\nimport { ImageEditorAdjustments } from \"./adjustments-panel\";\nimport { ImageEditorBlend } from \"./blend-panel\";\nimport { ImageEditorBlur } from \"./blur-panel\";\nimport { ImageEditorCrop } from \"./crop-panel\";\nimport { ImageEditorCurves } from \"./curves-panel\";\nimport { ImageEditorFilters } from \"./filters-panel\";\nimport { ImageEditorMetadata } from \"./metadata-panel\";\n\nexport const defaultToolPanels: Record<string, ReactNode> = {\n  adjust: <ImageEditorAdjustments />,\n  effects: <ImageEditorAdjustments defaultSection=\"effects\" />,\n  compose: <ImageEditorCrop />,\n  curves: <ImageEditorCurves />,\n  filters: <ImageEditorFilters />,\n  blender: <ImageEditorBlend />,\n  blur: <ImageEditorBlur />,\n  metadata: <ImageEditorMetadata />,\n};\n\nexport interface ImageEditorToolPanelProps {\n  /**\n   * Panel per tool id. Merged over the defaults, so you can replace one\n   * panel or add panels for your own tools: `{ stickers: <MyPanel /> }`.\n   */\n  panels?: Partial<Record<ImageEditorToolId, ReactNode>>;\n}\n\n/** Renders the panel for the active tool. */\nexport function ImageEditorToolPanel({ panels }: ImageEditorToolPanelProps) {\n  const editor = useImageEditor();\n  const merged: Record<string, ReactNode> = { ...defaultToolPanels, ...panels };\n  return <>{merged[editor.tool] ?? null}</>;\n}\n",
+      "type": "registry:component",
+      "target": "components/image-editor/tool-panel.tsx"
+    }
+  ],
+  "categories": [
+    "image-editor"
+  ],
+  "type": "registry:component"
+}

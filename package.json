@@ -1,0 +1,15 @@
+{
+  "name": "photocn-monorepo",
+  "private": true,
+  "packageManager": "pnpm@10.33.3",
+  "scripts": {
+    "dev": "pnpm --parallel --filter photocn --filter www dev",
+    "build": "pnpm --filter photocn build && pnpm --filter www build",
+    "build:registry": "pnpm --filter www registry:build",
+    "test": "pnpm --filter photocn test",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "playwright": "1.59.1"
+  }
+}

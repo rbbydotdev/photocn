@@ -1,0 +1,25 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "image-editor-panel-header",
+  "title": "Panel Header",
+  "description": "Shared title + reset header used by the panels.",
+  "dependencies": [
+    "lucide-react"
+  ],
+  "registryDependencies": [
+    "button",
+    "separator"
+  ],
+  "files": [
+    {
+      "path": "src/registry/image-editor/panel-header.tsx",
+      "content": "\"use client\";\n\nimport { RotateCcwIcon } from \"lucide-react\";\n\nimport { Button } from \"@/components/ui/button\";\nimport { Separator } from \"@/components/ui/separator\";\n\nexport interface PanelResetHeaderProps {\n  title: string;\n  description?: string;\n  onReset?: () => void;\n  resetDisabled?: boolean;\n  /** When true, the trailing separator is omitted. Most panels want it. */\n  noSeparator?: boolean;\n}\n\n/**\n * The shared header strip used by every sidebar panel: title + description on\n * the left, \"Reset\" button on the right, separator below.\n */\nexport function PanelResetHeader({\n  title,\n  description,\n  onReset,\n  resetDisabled = false,\n  noSeparator = false,\n}: PanelResetHeaderProps) {\n  return (\n    <>\n      <div className=\"flex min-h-12 items-center justify-between gap-3 px-4\">\n        <div className=\"min-w-0\">\n          <h2 className=\"truncate text-sm font-semibold\">{title}</h2>\n          {description ? (\n            <p className=\"truncate text-xs text-muted-foreground\">\n              {description}\n            </p>\n          ) : null}\n        </div>\n        <Button\n          disabled={resetDisabled || !onReset}\n          onClick={onReset}\n          size=\"sm\"\n          type=\"button\"\n          variant=\"outline\"\n        >\n          <RotateCcwIcon aria-hidden=\"true\" data-icon=\"inline-start\" />\n          Reset\n        </Button>\n      </div>\n      {noSeparator ? null : <Separator />}\n    </>\n  );\n}\n",
+      "type": "registry:component",
+      "target": "components/image-editor/panel-header.tsx"
+    }
+  ],
+  "categories": [
+    "image-editor"
+  ],
+  "type": "registry:component"
+}
