@@ -1,7 +1,7 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry.json",
   "name": "photocn",
-  "homepage": "http://localhost:3100",
+  "homepage": "http://localhost:3000",
   "items": [
     {
       "name": "image-editor",
@@ -14,13 +14,13 @@
       ],
       "registryDependencies": [
         "badge",
-        "http://localhost:3100/r/image-editor-canvas.json",
-        "http://localhost:3100/r/image-editor-export.json",
-        "http://localhost:3100/r/image-editor-histogram.json",
-        "http://localhost:3100/r/image-editor-layout.json",
-        "http://localhost:3100/r/image-editor-recipes.json",
-        "http://localhost:3100/r/image-editor-tool-panel.json",
-        "http://localhost:3100/r/image-editor-toolbar.json",
+        "http://localhost:3000/r/image-editor-canvas.json",
+        "http://localhost:3000/r/image-editor-export.json",
+        "http://localhost:3000/r/image-editor-histogram.json",
+        "http://localhost:3000/r/image-editor-layout.json",
+        "http://localhost:3000/r/image-editor-recipes.json",
+        "http://localhost:3000/r/image-editor-tool-panel.json",
+        "http://localhost:3000/r/image-editor-toolbar.json",
         "tooltip"
       ],
       "files": [
@@ -147,13 +147,13 @@
         "photocn@^0.1.0"
       ],
       "registryDependencies": [
-        "http://localhost:3100/r/image-editor-adjustments.json",
-        "http://localhost:3100/r/image-editor-blend.json",
-        "http://localhost:3100/r/image-editor-blur.json",
-        "http://localhost:3100/r/image-editor-crop.json",
-        "http://localhost:3100/r/image-editor-curves.json",
-        "http://localhost:3100/r/image-editor-filters.json",
-        "http://localhost:3100/r/image-editor-metadata.json"
+        "http://localhost:3000/r/image-editor-adjustments.json",
+        "http://localhost:3000/r/image-editor-blend.json",
+        "http://localhost:3000/r/image-editor-blur.json",
+        "http://localhost:3000/r/image-editor-crop.json",
+        "http://localhost:3000/r/image-editor-curves.json",
+        "http://localhost:3000/r/image-editor-filters.json",
+        "http://localhost:3000/r/image-editor-metadata.json"
       ],
       "files": [
         {
@@ -201,7 +201,7 @@
       "registryDependencies": [
         "button",
         "field",
-        "http://localhost:3100/r/image-editor-panel-header.json",
+        "http://localhost:3000/r/image-editor-panel-header.json",
         "separator",
         "slider",
         "tabs",
@@ -230,7 +230,7 @@
       "registryDependencies": [
         "button",
         "field",
-        "http://localhost:3100/r/image-editor-panel-header.json",
+        "http://localhost:3000/r/image-editor-panel-header.json",
         "slider",
         "tooltip"
       ],
@@ -256,7 +256,7 @@
       "registryDependencies": [
         "context-menu",
         "field",
-        "http://localhost:3100/r/image-editor-panel-header.json",
+        "http://localhost:3000/r/image-editor-panel-header.json",
         "tabs",
         "tooltip"
       ],
@@ -282,7 +282,7 @@
       ],
       "registryDependencies": [
         "field",
-        "http://localhost:3100/r/image-editor-panel-header.json",
+        "http://localhost:3000/r/image-editor-panel-header.json",
         "separator",
         "slider",
         "tabs",
@@ -346,7 +346,7 @@
       "registryDependencies": [
         "button",
         "field",
-        "http://localhost:3100/r/image-editor-panel-header.json",
+        "http://localhost:3000/r/image-editor-panel-header.json",
         "slider",
         "tooltip"
       ],
@@ -450,7 +450,7 @@
       ],
       "registryDependencies": [
         "command",
-        "http://localhost:3100/r/image-editor-toolbar.json"
+        "http://localhost:3000/r/image-editor-toolbar.json"
       ],
       "files": [
         {

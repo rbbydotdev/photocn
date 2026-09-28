@@ -64,6 +64,8 @@ import {
   adjustDefaultValue,
   aspectRatioOptions as defaultAspectRatioOptions,
   blurDefaultValue,
+  filterMixToStrength,
+  filterStrengthToMix,
   type AdjustColorValue,
   type AdjustEffectValue,
   type AdjustLightValue,
@@ -217,8 +219,10 @@ export interface ImageEditorApi {
     presets: readonly FilterPreset[];
     /** Label currently being loaded, if any. */
     loading: string | null;
+    /** Apply a preset at full strength (null removes the filter). */
     select: (preset: FilterPreset | string | null) => Promise<void>;
-    setMix: (mix: number) => void;
+    /** 0 = original photo, 1 = full filter. */
+    setStrength: (strength: number) => void;
     reset: () => void;
   };
 
@@ -734,7 +738,8 @@ export function useImageEditorState(
     setLoadingFilter(resolved.label);
     try {
       const opt = await resolved.load();
-      patchNow("filters", { opt });
+      // A new look starts at full strength, like every phone editor.
+      patchNow("filters", { opt, mix: 0 });
     } finally {
       setLoadingFilter(null);
     }
@@ -907,12 +912,13 @@ export function useImageEditorState(
     filters: {
       value: {
         label: params.filters.opt ? params.filters.opt.label : null,
-        mix: params.filters.mix ?? 0,
+        strength: filterMixToStrength(params.filters.mix ?? 0),
       },
       presets: filterPresets,
       loading: loadingFilter,
       select: selectFilter,
-      setMix: (mix) => patchTransient("filters", { mix }),
+      setStrength: (strength) =>
+        patchTransient("filters", { mix: filterStrengthToMix(strength) }),
       reset: () => patchNow("filters", { opt: 0, mix: 0 }),
     },
 

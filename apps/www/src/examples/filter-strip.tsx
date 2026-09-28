@@ -44,8 +44,8 @@ function FilterStrip() {
         <Slider
           aria-label="Filter strength"
           max={100}
-          onValueChange={([value]) => filters.setMix((value ?? 0) / 100)}
-          value={[Math.round(filters.value.mix * 100)]}
+          onValueChange={([value]) => filters.setStrength((value ?? 0) / 100)}
+          value={[Math.round(filters.value.strength * 100)]}
         />
       ) : null}
     </div>

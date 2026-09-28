@@ -20,7 +20,8 @@ import { cn } from "@/lib/utils";
 
 export interface FiltersPanelValue {
   label: string | null;
-  mix: number;
+  /** 0 = original photo, 1 = full filter. */
+  strength: number;
 }
 
 export interface FiltersPanelOption {
@@ -39,7 +40,7 @@ export interface FiltersPanelProps {
   disabled?: boolean;
   className?: string;
   onSelect: (next: FiltersPanelSelection | null) => void;
-  onMixChange?: (mix: number) => void;
+  onStrengthChange?: (strength: number) => void;
   onReset?: () => void;
 }
 
@@ -52,15 +53,15 @@ export function FiltersPanel({
   disabled = false,
   className,
   onSelect,
-  onMixChange,
+  onStrengthChange,
   onReset,
 }: FiltersPanelProps) {
   const [loadingLabel, setLoadingLabel] = useState<string | null>(null);
-  const mixSliderId = useId();
+  const strengthSliderId = useId();
 
   const isLoading = loadingLabel !== null;
   const activeLabel = value.label;
-  const mixPercent = Math.round(clamp01(value.mix) * 100);
+  const strengthPercent = Math.round(clamp01(value.strength) * 100);
 
   const handleSelect = async (option: FiltersPanelOption) => {
     if (disabled || isLoading) return;
@@ -78,9 +79,9 @@ export function FiltersPanel({
     onSelect(null);
   };
 
-  const handleMixChange = (next: number[]) => {
-    const raw = next[0] ?? mixPercent;
-    onMixChange?.(clamp01(raw / 100));
+  const handleStrengthChange = (next: number[]) => {
+    const raw = next[0] ?? strengthPercent;
+    onStrengthChange?.(clamp01(raw / 100));
   };
 
   return (
@@ -153,22 +154,22 @@ export function FiltersPanel({
           </div>
 
           {activeLabel !== null ? (
-            <Field data-slot="filters-mix" data-disabled={disabled}>
+            <Field data-slot="filters-strength" data-disabled={disabled}>
               <div className="flex items-center justify-between gap-3">
-                <FieldLabel htmlFor={mixSliderId}>Mix</FieldLabel>
+                <FieldLabel htmlFor={strengthSliderId}>Strength</FieldLabel>
                 <output className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                  {mixPercent}%
+                  {strengthPercent}%
                 </output>
               </div>
               <Slider
-                aria-label="Filter mix"
-                disabled={disabled || !onMixChange}
-                id={mixSliderId}
+                aria-label="Filter strength"
+                disabled={disabled || !onStrengthChange}
+                id={strengthSliderId}
                 max={100}
                 min={0}
-                onValueChange={handleMixChange}
+                onValueChange={handleStrengthChange}
                 step={1}
-                value={[mixPercent]}
+                value={[strengthPercent]}
               />
             </Field>
           ) : null}
@@ -193,11 +194,11 @@ export function ImageEditorFilters(props: ImageEditorFiltersProps) {
   return (
     <FiltersPanel
       disabled={editor.disabled}
-      onMixChange={editor.filters.setMix}
+      onStrengthChange={editor.filters.setStrength}
       onReset={editor.filters.reset}
       onSelect={(next) =>
         next
-          ? editor.patch("filters", { opt: next.opt })
+          ? editor.patch("filters", { opt: next.opt, mix: 0 })
           : void editor.filters.select(null)
       }
       options={editor.filters.presets}

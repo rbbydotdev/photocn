@@ -9,7 +9,7 @@
   ],
   "registryDependencies": [
     "command",
-    "http://localhost:3100/r/image-editor-toolbar.json"
+    "http://localhost:3000/r/image-editor-toolbar.json"
   ],
   "files": [
     {

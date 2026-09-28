@@ -105,8 +105,21 @@ export function isBlurValueDefault(value: BlurValue): boolean {
 export interface FiltersValue {
   /** Label of the active preset, or `null` when no filter is applied. */
   label: string | null;
-  /** Filter strength, 0..1. */
-  mix: number;
+  /** 0 = original photo, 1 = full filter. */
+  strength: number;
+}
+
+/**
+ * The renderer stores filter intensity as an offset around full strength
+ * (`params.filters.mix`: 0 = 100%, -1 = 0%). These convert to/from the
+ * 0..1 strength every UI shows.
+ */
+export function filterMixToStrength(mix: number): number {
+  return Math.min(1, Math.max(0, (mix ?? 0) + 1));
+}
+
+export function filterStrengthToMix(strength: number): number {
+  return Math.min(1, Math.max(0, strength)) - 1;
 }
 
 export interface BlendValue {

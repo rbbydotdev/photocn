@@ -54,6 +54,9 @@ describe("useImageEditorState", () => {
     const { result } = setup({ filterPresets: [custom] });
     await act(() => result.current.filters.select("sepia-ish"));
     expect(result.current.filters.value.label).toBe("sepia-ish");
+    expect(result.current.filters.value.strength).toBe(1);
+    act(() => result.current.filters.setStrength(0));
+    expect(result.current.params.filters.mix).toBe(-1);
     await act(() => result.current.filters.select(null));
     expect(result.current.filters.value.label).toBeNull();
     await expect(result.current.filters.select("nope")).rejects.toThrow(/Unknown filter/);

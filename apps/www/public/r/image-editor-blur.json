@@ -9,7 +9,7 @@
   ],
   "registryDependencies": [
     "field",
-    "http://localhost:3100/r/image-editor-panel-header.json",
+    "http://localhost:3000/r/image-editor-panel-header.json",
     "separator",
     "slider",
     "tabs",

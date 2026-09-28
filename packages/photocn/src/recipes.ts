@@ -21,7 +21,8 @@ export interface RecipeV1 {
       "bokehstrength" | "bokehlensout" | "gaussianstrength" | "gaussianlensout"
     >
   >;
-  filters?: { label: string };
+  /** `strength` is 0..1 (omitted = full strength). */
+  filters?: { label: string; strength?: number };
 }
 
 const BLUR_KEYS = [
@@ -68,9 +69,13 @@ export function buildRecipe(
 
   // Filter persists by label only so it can be re-resolved on load.
   const filterLabel = params.filters.opt ? params.filters.opt.label : undefined;
+  // Stored as 0..1 strength; params keep the renderer's offset (0 = full).
+  const strength = Math.min(1, Math.max(0, (params.filters.mix ?? 0) + 1));
   const filters =
     filterLabel && filterLabel.length > 0
-      ? { label: filterLabel }
+      ? strength < 1
+        ? { label: filterLabel, strength }
+        : { label: filterLabel }
       : undefined;
 
   if (!lights && !colors && !effects && !blur && !filters) return null;
@@ -102,6 +107,7 @@ export function applyRecipe(
     // Label-only placeholder; resolve it to a renderer-ready option with a
     // FilterPreset (the React controller's `recipes.apply` does this).
     next.filters.opt = { label: recipe.filters.label };
+    next.filters.mix = (recipe.filters.strength ?? 1) - 1;
   } else {
     next.filters.opt = 0;
   }
