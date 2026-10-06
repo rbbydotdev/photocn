@@ -22,7 +22,7 @@ pnpm build                  # photocn, registry, site
 ## Conventions
 
 - TypeScript strict. Match the surrounding code's naming and comment density.
-- Registry components use shadcn **Radix** primitives via `@/components/ui/*`; siblings import each other relatively (`./canvas`) so they install into one folder.
+- Registry components use shadcn's **Base UI** primitives (`base-nova` style) via `@/components/ui/*`: compose with the `render` prop (not `asChild`), `onValueCommitted` on sliders, array values on toggle groups. Siblings import each other relatively (`./canvas`) so they install into one folder.
 - Connected components are named `ImageEditor*` and read `useImageEditor()`; each panel file also exports a plain controlled version (`value` / `onChange`).
 - Geometry is non-destructive and rendered from the original in a fixed order (see `docs/compose.md`). Never bake pixels.
 - A `<canvas>` given to the render worker can't be reused: key it with `canvasKey`.

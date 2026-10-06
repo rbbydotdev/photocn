@@ -23,7 +23,7 @@ import { ImageEditorExportDialog } from "@/components/image-editor/export-dialog
 
 | Prop | Type | Description |
 | --- | --- | --- |
-| `trigger` | `ReactNode` | The button that opens it. Default: an Export button. |
+| `trigger` | `ReactElement` | The element that opens it (one element, e.g. a `<Button>`). Default: an Export button. |
 | `defaultFormat` | `"png" \| "jpeg" \| "webp"` | Default `"png"`. |
 | `onSave` | `(result) => Promise<void>` | Adds a Save button, e.g. to upload the image. |
 | `saveLabel` | `string` | Label for the Save button. |

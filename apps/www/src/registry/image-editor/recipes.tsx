@@ -76,12 +76,25 @@ export function RecipeActions({
         data-slot="recipe-actions"
       >
         <Tooltip>
-          <TooltipTrigger asChild>
-            {saveDisabled ? (
-              <span className="inline-flex">
+          <TooltipTrigger
+            render={
+              saveDisabled ? (
+                <span className="inline-flex">
+                  <Button
+                    aria-label="Save recipe"
+                    disabled
+                    size="icon-sm"
+                    type="button"
+                    variant="ghost"
+                  >
+                    <BookmarkPlusIcon aria-hidden="true" />
+                    <span className="sr-only">Save recipe</span>
+                  </Button>
+                </span>
+              ) : (
                 <Button
                   aria-label="Save recipe"
-                  disabled
+                  onClick={handleSave}
                   size="icon-sm"
                   type="button"
                   variant="ghost"
@@ -89,39 +102,30 @@ export function RecipeActions({
                   <BookmarkPlusIcon aria-hidden="true" />
                   <span className="sr-only">Save recipe</span>
                 </Button>
-              </span>
-            ) : (
-              <Button
-                aria-label="Save recipe"
-                onClick={handleSave}
-                size="icon-sm"
-                type="button"
-                variant="ghost"
-              >
-                <BookmarkPlusIcon aria-hidden="true" />
-                <span className="sr-only">Save recipe</span>
-              </Button>
-            )}
-          </TooltipTrigger>
+              )
+            }
+          />
           <TooltipContent side="bottom">
             {recipe === null ? "Nothing to save yet" : "Save recipe"}
           </TooltipContent>
         </Tooltip>
 
         <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              aria-label="Load recipe"
-              disabled={disabled}
-              onClick={handleLoadClick}
-              size="icon-sm"
-              type="button"
-              variant="ghost"
-            >
-              <FolderOpenIcon aria-hidden="true" />
-              <span className="sr-only">Load recipe</span>
-            </Button>
-          </TooltipTrigger>
+          <TooltipTrigger
+            render={
+              <Button
+                aria-label="Load recipe"
+                disabled={disabled}
+                onClick={handleLoadClick}
+                size="icon-sm"
+                type="button"
+                variant="ghost"
+              >
+                <FolderOpenIcon aria-hidden="true" />
+                <span className="sr-only">Load recipe</span>
+              </Button>
+            }
+          />
           <TooltipContent side="bottom">Load recipe</TooltipContent>
         </Tooltip>
 

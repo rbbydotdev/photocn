@@ -26,10 +26,12 @@ Registry: ${siteUrl}/r/registry.json (items at ${siteUrl}/r/{name}.json)
 ## Install
 
 \`\`\`bash
-npx shadcn@latest init -b radix
+npx shadcn@latest init -b base
 npx shadcn@latest registry add @photocn=${siteUrl}/r/{name}.json
 ${install("image-editor")}
 \`\`\`
+
+photocn needs the Base UI version of shadcn/ui: the "style" in components.json must start with "base-" (e.g. base-nova). Radix projects (radix-* styles) aren't supported; components compose with Base UI's \`render\` prop.
 
 \`\`\`tsx
 import { ImageEditor } from "@/components/image-editor/image-editor";

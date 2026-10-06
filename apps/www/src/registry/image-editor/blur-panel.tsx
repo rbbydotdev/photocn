@@ -220,8 +220,8 @@ function BlurKindTabTrigger({
 }) {
   const Icon = kind.icon;
 
-  // No Tooltip wrapper — TooltipTrigger asChild clobbers Radix Tabs'
-  // data-state, hiding the active underline. Use title for hover hints.
+  // Native `title` for hover hints; a tooltip trigger around the tab would
+  // add its own state attributes to it.
   return (
     <TabsTrigger
       aria-label={kind.label}
@@ -301,8 +301,8 @@ function toSliderPercent(value: number): number {
   return Math.round(clamp01(value) * 100);
 }
 
-function fromSliderPercent(next: number[], fallback: number): number {
-  const raw = next[0];
+function fromSliderPercent(next: number | readonly number[], fallback: number): number {
+  const raw = typeof next === "number" ? next : next[0];
   if (raw === undefined) return fallback;
   return clamp01(raw / 100);
 }

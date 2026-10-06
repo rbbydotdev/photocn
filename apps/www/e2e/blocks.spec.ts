@@ -53,7 +53,7 @@ test("editor: renders, edits, ⌘K menu, full-resolution export", async ({ page 
   await expect(editor).toHaveAttribute("data-layout", "desktop");
   await expectRendered(stageCanvas(page));
 
-  await editor.getByRole("radio", { name: "Filters" }).click();
+  await editor.locator("[data-slot=editor-toolbar]").getByRole("button", { name: "Filters" }).click();
   await editor.getByRole("button", { name: "juno" }).click();
   await expect(editor.getByRole("button", { name: "juno" })).toHaveAttribute("aria-pressed", "true");
   await expect(editor.getByRole("button", { name: "Undo" })).toBeEnabled();
@@ -66,6 +66,39 @@ test("editor: renders, edits, ⌘K menu, full-resolution export", async ({ page 
   await editor.getByRole("button", { name: "Export" }).click();
   const size = await downloadedSize(page, () => page.getByRole("button", { name: "Download" }).click());
   expect(size).toMatchObject({ width: 2400, height: 1600, type: "png" });
+});
+
+test("editor: menus, selects and tooltips (Base UI)", async ({ page }) => {
+  await page.goto("/view/editor");
+  const editor = page.locator("[data-slot=image-editor]");
+  await expectRendered(stageCanvas(page));
+  const toolbar = editor.locator("[data-slot=editor-toolbar]");
+
+  // Toggle group: the active tool is pressed.
+  await toolbar.getByRole("button", { name: "Crop" }).click();
+  await expect(toolbar.getByRole("button", { name: "Crop" })).toHaveAttribute("aria-pressed", "true");
+
+  // Select shows the option label, not the raw value.
+  const ratio = editor.getByRole("combobox").first();
+  await expect(ratio).toHaveText(/Freeform/);
+  await ratio.click();
+  await page.getByRole("option", { name: "16:9" }).click();
+  await expect(ratio).toHaveText(/16:9/);
+
+  // Tooltip on an icon button: move onto it, then let the pointer settle.
+  const rotate = (await editor.getByRole("button", { name: "Rotate left" }).boundingBox())!;
+  await page.mouse.move(rotate.x + rotate.width / 2, rotate.y + rotate.height / 2, { steps: 6 });
+  await page.mouse.move(rotate.x + rotate.width / 2 + 1, rotate.y + rotate.height / 2, { steps: 2 });
+  await expect(page.locator("[data-slot=tooltip-content]")).toHaveText("Rotate left");
+
+  // Context menu items run their action.
+  await toolbar.getByRole("button", { name: "Curves" }).click();
+  const curve = editor.getByRole("img", { name: /curve editor/ });
+  const points = await curve.locator("circle").count();
+  const box = (await curve.boundingBox())!;
+  await page.mouse.click(box.x + box.width * 0.3, box.y + box.height * 0.4, { button: "right" });
+  await page.getByRole("menuitem", { name: "Add point here" }).click();
+  await expect.poll(() => curve.locator("circle").count()).toBeGreaterThan(points);
 });
 
 test("editor-minimal: tabs switch panels, crop view, export", async ({ page }) => {
@@ -101,9 +134,18 @@ test("editor-mobile: compact layout, sheet panels, export drawer @mobile", async
   await sheet.getByRole("button", { name: "Close panel" }).tap();
   await expect(sheet).not.toHaveAttribute("data-open", "true");
 
+  // ⋯ menu items run their action (Base UI menus use onClick).
+  await expect(editor.getByRole("button", { name: "Undo" })).toBeEnabled();
+  await editor.getByRole("button", { name: "More" }).tap();
+  await page.getByRole("menuitem", { name: /Reset all/ }).tap();
+  await expect(editor.getByRole("button", { name: "Undo" })).toBeEnabled();
+  await page.locator("[data-slot=image-editor-compact-tools] button", { hasText: "Filters" }).first().tap();
+  await expect(sheet.getByRole("button", { name: "lark" })).toHaveAttribute("aria-pressed", "false");
+  await sheet.getByRole("button", { name: "Close panel" }).tap();
+
   await editor.getByRole("button", { name: "Export" }).tap();
   const drawer = page.locator("[data-slot=image-editor-export-dialog]");
-  await expect(drawer).toHaveAttribute("data-vaul-drawer-direction", "bottom");
+  await expect(drawer).toHaveAttribute("data-swipe-direction", "down");
   const size = await downloadedSize(page, () => drawer.getByRole("button", { name: "Download" }).tap());
   expect(size).toMatchObject({ width: 1600, height: 2400 });
 });
@@ -127,17 +169,21 @@ test("editor-mobile: the photo stays touchable while a panel is open @mobile", a
     }, { intervals: [300] })
     .toBe(true);
   expect((await handle.boundingBox())!.width).toBeGreaterThanOrEqual(44);
-  const box = (await handle.boundingBox())!;
   // A real one-finger drag on the handle (CDP touch events → pointer events).
   const cdp = await page.context().newCDPSession(page);
   const touch = (type: "touchStart" | "touchMove" | "touchEnd", x: number, y: number) =>
     cdp.send("Input.dispatchTouchEvent", { type, touchPoints: type === "touchEnd" ? [] : [{ x, y }] });
-  const x = box.x + box.width / 2;
-  const y = box.y + box.height / 2;
-  await touch("touchStart", x, y);
-  for (let i = 1; i <= 8; i++) await touch("touchMove", x - i * 12, y - i * 6);
-  await touch("touchEnd", 0, 0);
-  await expect(page.getByRole("button", { name: "Undo" })).toBeEnabled();
+  // Software WebGL can still be re-fitting the photo; re-read the handle and
+  // repeat the gesture until it lands.
+  await expect(async () => {
+    const box = (await handle.boundingBox())!;
+    const x = box.x + box.width / 2;
+    const y = box.y + box.height / 2;
+    await touch("touchStart", x, y);
+    for (let i = 1; i <= 8; i++) await touch("touchMove", x - i * 12, y - i * 6);
+    await touch("touchEnd", 0, 0);
+    await expect(page.getByRole("button", { name: "Undo" })).toBeEnabled({ timeout: 3000 });
+  }).toPass({ timeout: 30_000 });
 });
 
 test("avatar-cropper: square crop saves a 512×512 avatar", async ({ page }) => {
@@ -166,7 +212,7 @@ test("upload-editor: drop zone → edit → upload callback", async ({ page }) =
   const editor = page.locator("[data-slot=image-editor]");
   await expect(editor).toBeVisible();
   await expectRendered(stageCanvas(page));
-  await editor.getByRole("radio", { name: "Filters" }).click();
+  await editor.locator("[data-slot=editor-toolbar]").getByRole("button", { name: "Filters" }).click();
   await editor.getByRole("button", { name: "crema" }).click();
 
   await editor.getByRole("button", { name: "Export" }).click();
@@ -187,7 +233,7 @@ test("filter-picker: pick a look, strength 0 is the original", async ({ page }) 
 
   await page.getByRole("button", { name: "juno" }).click();
   await expect(page.getByRole("button", { name: "juno" })).toHaveAttribute("aria-pressed", "true");
-  const strength = page.locator('[aria-label="Filter strength"] [role=slider], [role=slider][aria-label="Filter strength"]').first();
+  const strength = page.getByRole("slider", { name: "Filter strength" });
   await expect(strength).toBeVisible();
   await expect.poll(async () => meanDiff(await canvas.screenshot(), original)).toBeGreaterThan(5);
 

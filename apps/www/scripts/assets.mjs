@@ -175,9 +175,9 @@ try {
     await still(`editor-${scheme}`, "/view/editor", {
       scheme,
       act: async (page) => {
-        await editor(page).getByRole("radio", { name: "Filters" }).click();
+        await editor(page).locator("[data-slot=editor-toolbar]").getByRole("button", { name: "Filters" }).click();
         await editor(page).getByRole("button", { name: "crema" }).click();
-        await editor(page).getByRole("radio", { name: "Curves" }).click();
+        await editor(page).locator("[data-slot=editor-toolbar]").getByRole("button", { name: "Curves" }).click();
       },
     });
   }
@@ -246,7 +246,7 @@ try {
     { viewport: { width: 520, height: 760 } },
   );
   await clip("crop", "/view/editor", async (page) => {
-    await editor(page).getByRole("radio", { name: "Crop" }).click();
+    await editor(page).locator("[data-slot=editor-toolbar]").getByRole("button", { name: "Crop" }).click();
     await page.waitForTimeout(700);
     const straighten = editor(page).locator("[data-slot=crop-panel] [role=slider]").first();
     await caption(page, "Straighten +25°");

@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { AgentPromptButton } from "@/components/home/agent-prompt-button";
 import { Bento } from "@/components/home/bento";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 
 export default function HomePage() {
   return (
@@ -17,12 +17,12 @@ export default function HomePage() {
         </p>
         <div className="flex flex-col items-center gap-4">
           <div className="flex flex-wrap justify-center gap-3">
-            <Button asChild className="min-w-36" size="lg">
-              <Link href="/docs">Get Started</Link>
-            </Button>
-            <Button asChild className="min-w-36" size="lg" variant="outline">
-              <Link href="/docs/canvas">View Components</Link>
-            </Button>
+            <Link className={buttonVariants({ size: "lg", className: "min-w-36" })} href="/docs">
+              Get Started
+            </Link>
+            <Link className={buttonVariants({ size: "lg", variant: "outline", className: "min-w-36" })} href="/docs/canvas">
+              View Components
+            </Link>
           </div>
           <AgentPromptButton />
         </div>

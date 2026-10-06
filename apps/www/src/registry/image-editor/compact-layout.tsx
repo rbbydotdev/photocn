@@ -225,14 +225,16 @@ function CompactMenu({ showOpenButton, showRecipes }: { showOpenButton: boolean;
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button aria-label="More" className="size-11" size="icon" type="button" variant="ghost">
-            <EllipsisIcon />
-          </Button>
-        </DropdownMenuTrigger>
+        <DropdownMenuTrigger
+          render={
+            <Button aria-label="More" className="size-11" size="icon" type="button" variant="ghost">
+              <EllipsisIcon />
+            </Button>
+          }
+        />
         <DropdownMenuContent align="end" className="min-w-48">
           {showOpenButton ? (
-            <DropdownMenuItem onSelect={() => void editor.openFile()}>
+            <DropdownMenuItem onClick={() => void editor.openFile()}>
               <ImagePlusIcon /> Open image
             </DropdownMenuItem>
           ) : null}
@@ -240,17 +242,17 @@ function CompactMenu({ showOpenButton, showRecipes }: { showOpenButton: boolean;
             <>
               <DropdownMenuItem
                 disabled={!editor.recipes.current}
-                onSelect={() => editor.recipes.current && downloadRecipe(editor.recipes.current, editor.filename)}
+                onClick={() => editor.recipes.current && downloadRecipe(editor.recipes.current, editor.filename)}
               >
                 <BookmarkPlusIcon /> Save look
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => recipeInput.current?.click()}>
+              <DropdownMenuItem onClick={() => recipeInput.current?.click()}>
                 <FolderOpenIcon /> Load look
               </DropdownMenuItem>
             </>
           ) : null}
           <DropdownMenuSeparator />
-          <DropdownMenuItem disabled={!editor.hasImage} onSelect={editor.resetAll} variant="destructive">
+          <DropdownMenuItem disabled={!editor.hasImage} onClick={editor.resetAll} variant="destructive">
             <RotateCcwIcon /> Reset all edits
           </DropdownMenuItem>
         </DropdownMenuContent>

@@ -79,8 +79,8 @@ export function FiltersPanel({
     onSelect(null);
   };
 
-  const handleStrengthChange = (next: number[]) => {
-    const raw = next[0] ?? strengthPercent;
+  const handleStrengthChange = (next: number | readonly number[]) => {
+    const raw = (typeof next === "number" ? next : next[0]) ?? strengthPercent;
     onStrengthChange?.(clamp01(raw / 100));
   };
 
@@ -156,13 +156,15 @@ export function FiltersPanel({
           {activeLabel !== null ? (
             <Field data-slot="filters-strength" data-disabled={disabled}>
               <div className="flex items-center justify-between gap-3">
-                <FieldLabel htmlFor={strengthSliderId}>Strength</FieldLabel>
+                <FieldLabel htmlFor={strengthSliderId} id={`${strengthSliderId}-label`}>
+                  Strength
+                </FieldLabel>
                 <output className="shrink-0 text-xs tabular-nums text-muted-foreground">
                   {strengthPercent}%
                 </output>
               </div>
               <Slider
-                aria-label="Filter strength"
+                aria-labelledby={`${strengthSliderId}-label`}
                 disabled={disabled || !onStrengthChange}
                 id={strengthSliderId}
                 max={100}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { DownloadIcon } from "lucide-react";
 import { buildRecipe, createEditorParams, type RecipeV1 } from "photocn";
 import { filterPresets } from "photocn/filters";
@@ -20,6 +20,7 @@ export interface BatchLooksProps {
 export function BatchLooks({ photos, className }: BatchLooksProps) {
   const [filter, setFilter] = useState<string | null>("crema");
   const [exposure, setExposure] = useState(0.1);
+  const exposureLabelId = useId();
 
   // One recipe, shared by every photo.
   const recipe: RecipeV1 = (() => {
@@ -50,10 +51,10 @@ export function BatchLooks({ photos, className }: BatchLooksProps) {
             </Button>
           ))}
         </div>
-        <label className="flex items-center gap-3 text-sm sm:w-56">
-          Exposure
-          <Slider max={100} min={-100} onValueChange={([v]) => setExposure((v ?? 0) / 100)} value={[exposure * 100]} />
-        </label>
+        <div className="flex items-center gap-3 text-sm sm:w-56">
+          <span id={exposureLabelId}>Exposure</span>
+          <Slider aria-labelledby={exposureLabelId} max={100} min={-100} onValueChange={(next) => setExposure(((typeof next === "number" ? next : next[0]) ?? 0) / 100)} value={[exposure * 100]} />
+        </div>
       </div>
     </div>
   );

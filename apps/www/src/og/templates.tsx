@@ -16,7 +16,13 @@ const MUTED = "#a1a1aa";
 const LINE = "rgba(245,245,244,0.14)";
 
 export const TAGLINE = "The photo editor for shadcn/ui";
-export const INSTALL = "npx shadcn add @photocn/image-editor";
+/**
+ * The URL form works in any shadcn project today, with no registry setup.
+ * Switch to `npx shadcn add @photocn/image-editor` once @photocn is listed
+ * in the shadcn registry directory.
+ */
+export const installCommand = (item: string) => `npx shadcn add https://photocn.dev/r/${item}.json`;
+export const INSTALL = installCommand("image-editor");
 const STACK = ["React", "TypeScript", "WebGL", "Tailwind"];
 
 /** Acid safelight in the top-right, a faint bounce bottom-left, vignette. */
@@ -132,7 +138,7 @@ export function Banner({
         {TAGLINE}
       </div>
       <div style={{ display: "flex", marginTop: 20 * unit }}>
-        <Command fontSize={30 * unit} />
+        <Command fontSize={27 * unit} />
       </div>
       <div style={{ display: "flex", marginTop: 16 * unit }}>
         <Stack fontSize={26 * unit} />
@@ -218,9 +224,17 @@ export function DocOg({
       </div>
       <div style={{ display: "flex", alignItems: "center" }}>
         {item ? (
-          <div style={{ display: "flex", gap: 16, fontFamily: "Geist Mono", fontSize: item.length > 18 ? 28 : 32 }}>
+          <div style={{ display: "flex", gap: 16, fontFamily: "Geist Mono", fontSize: 30, lineHeight: 1.35 }}>
             <span style={{ color: ACID }}>$</span>
-            <span>npx shadcn add @photocn/{item}</span>
+            {/* Long item URLs wrap after "add" rather than shrinking. */}
+            {installCommand(item).length > 50 ? (
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <span>npx shadcn add</span>
+                <span>{installCommand(item).slice("npx shadcn add ".length)}</span>
+              </div>
+            ) : (
+              <span>{installCommand(item)}</span>
+            )}
           </div>
         ) : (
           <Stack fontSize={30} />

@@ -161,7 +161,10 @@ export function CropPanel({
             <div className="flex items-center gap-2">
               <Select
                 disabled={disabled || !onAspectRatioChange}
-                onValueChange={onAspectRatioChange}
+                items={aspectRatioOptions}
+                onValueChange={(next) => {
+                  if (next) onAspectRatioChange?.(next);
+                }}
                 value={value.aspectRatio}
               >
                 <SelectTrigger aria-labelledby={`${id}-ratio`} className="flex-1" size="sm">
@@ -221,18 +224,20 @@ export function CropPanel({
                     </Button>
                   ) : null}
                   <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Toggle
-                        aria-label="Adjust corners"
-                        disabled={disabled || !onEditingCornersChange}
-                        onPressedChange={(pressed) => onEditingCornersChange?.(pressed)}
-                        pressed={value.editingCorners}
-                        size="sm"
-                        variant="outline"
-                      >
-                        <SkewIcon />
-                      </Toggle>
-                    </TooltipTrigger>
+                    <TooltipTrigger
+                      render={
+                        <Toggle
+                          aria-label="Adjust corners"
+                          disabled={disabled || !onEditingCornersChange}
+                          onPressedChange={(pressed) => onEditingCornersChange?.(pressed)}
+                          pressed={value.editingCorners}
+                          size="sm"
+                          variant="outline"
+                        >
+                          <SkewIcon />
+                        </Toggle>
+                      }
+                    />
                     <TooltipContent>Adjust corners</TooltipContent>
                   </Tooltip>
                 </div>
@@ -345,8 +350,8 @@ function CenteredSlider({
         disabled={disabled}
         max={max}
         min={min}
-        onValueChange={([next]) => onChange(next ?? 0)}
-        onValueCommit={() => onCommit?.()}
+        onValueChange={(next) => onChange((typeof next === "number" ? next : next[0]) ?? 0)}
+        onValueCommitted={() => onCommit?.()}
         step={step}
         value={[value]}
       />
@@ -373,9 +378,7 @@ function IconAction({
   );
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        {props.disabled ? <span className="inline-flex">{button}</span> : button}
-      </TooltipTrigger>
+      <TooltipTrigger render={props.disabled ? <span className="inline-flex">{button}</span> : button} />
       <TooltipContent>{label}</TooltipContent>
     </Tooltip>
   );

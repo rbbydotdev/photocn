@@ -430,7 +430,7 @@ function NumberRow({
         min={min}
         max={max}
         step={step}
-        onValueChange={(v) => onChange(v[0] ?? value)}
+        onValueChange={(v) => onChange((typeof v === "number" ? v : v[0]) ?? value)}
       />
       {help ? (
         <p className="text-[10px] leading-snug text-muted-foreground">{help}</p>

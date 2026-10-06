@@ -460,20 +460,22 @@ export function CurvesPanel({
               <TabsList className="grid w-full grid-cols-4">
                 {CHANNEL_ORDER.map((channel) => (
                   <Tooltip key={channel}>
-                    <TooltipTrigger asChild>
-                      <TabsTrigger
-                        aria-label={`${CHANNEL_LABEL[channel]} channel`}
-                        disabled={disabled}
-                        value={channel}
-                      >
-                        <span
-                          aria-hidden="true"
-                          className="inline-block size-2 rounded-full"
-                          style={{ backgroundColor: CHANNEL_STROKE[channel] }}
-                        />
-                        <span>{CHANNEL_LABEL[channel]}</span>
-                      </TabsTrigger>
-                    </TooltipTrigger>
+                    <TooltipTrigger
+                      render={
+                        <TabsTrigger
+                          aria-label={`${CHANNEL_LABEL[channel]} channel`}
+                          disabled={disabled}
+                          value={channel}
+                        >
+                          <span
+                            aria-hidden="true"
+                            className="inline-block size-2 rounded-full"
+                            style={{ backgroundColor: CHANNEL_STROKE[channel] }}
+                          />
+                          <span>{CHANNEL_LABEL[channel]}</span>
+                        </TabsTrigger>
+                      }
+                    />
                     <TooltipContent side="bottom">
                       {channel === "rgb"
                         ? "Composite (applied first)"
@@ -500,118 +502,120 @@ export function CurvesPanel({
                   style={{ pointerEvents: "none" }}
                 />
                 <ContextMenu>
-                <ContextMenuTrigger asChild>
-                <svg
-                  ref={svgRef}
-                  className={cn(
-                    "relative block touch-none",
-                    disabled && "pointer-events-none opacity-60",
-                  )}
-                  height={size}
-                  onPointerDown={handleSurfacePointerDown}
-                  onContextMenu={handleContextMenu}
-                  role="img"
-                  aria-label={`${CHANNEL_LABEL[activeChannel]} curve editor`}
-                  viewBox={`0 0 ${size} ${size}`}
-                  width={size}
-                >
-                  {/* grid */}
-                  <g
-                    aria-hidden="true"
-                    pointerEvents="none"
-                    stroke="currentColor"
-                    strokeOpacity={0.12}
+                <ContextMenuTrigger
+                  render={
+                    <svg
+                    ref={svgRef}
+                    className={cn(
+                      "relative block touch-none",
+                      disabled && "pointer-events-none opacity-60",
+                    )}
+                    height={size}
+                    onPointerDown={handleSurfacePointerDown}
+                    onContextMenu={handleContextMenu}
+                    role="img"
+                    aria-label={`${CHANNEL_LABEL[activeChannel]} curve editor`}
+                    viewBox={`0 0 ${size} ${size}`}
+                    width={size}
                   >
-                    {[1, 2, 3].map((i) => (
-                      <line
-                        key={`vx-${i}`}
-                        x1={(i * size) / 4}
-                        y1={0}
-                        x2={(i * size) / 4}
-                        y2={size}
+                    {/* grid */}
+                    <g
+                      aria-hidden="true"
+                      pointerEvents="none"
+                      stroke="currentColor"
+                      strokeOpacity={0.12}
+                    >
+                      {[1, 2, 3].map((i) => (
+                        <line
+                          key={`vx-${i}`}
+                          x1={(i * size) / 4}
+                          y1={0}
+                          x2={(i * size) / 4}
+                          y2={size}
+                        />
+                      ))}
+                      {[1, 2, 3].map((i) => (
+                        <line
+                          key={`hy-${i}`}
+                          x1={0}
+                          y1={(i * size) / 4}
+                          x2={size}
+                          y2={(i * size) / 4}
+                        />
+                      ))}
+                    </g>
+                    {/* identity diagonal */}
+                    <line
+                      aria-hidden="true"
+                      pointerEvents="none"
+                      stroke="currentColor"
+                      strokeOpacity={0.2}
+                      strokeDasharray="4 4"
+                      x1={0}
+                      y1={size}
+                      x2={size}
+                      y2={0}
+                    />
+                    {/* dimmed ghost curves for inactive channels */}
+                    {ghostPaths.map(({ channel, d }) => (
+                      <path
+                        key={channel}
+                        d={d}
+                        fill="none"
+                        pointerEvents="none"
+                        stroke={CHANNEL_STROKE[channel]}
+                        strokeOpacity={0.25}
+                        strokeWidth={1.5}
                       />
                     ))}
-                    {[1, 2, 3].map((i) => (
-                      <line
-                        key={`hy-${i}`}
-                        x1={0}
-                        y1={(i * size) / 4}
-                        x2={size}
-                        y2={(i * size) / 4}
-                      />
-                    ))}
-                  </g>
-                  {/* identity diagonal */}
-                  <line
-                    aria-hidden="true"
-                    pointerEvents="none"
-                    stroke="currentColor"
-                    strokeOpacity={0.2}
-                    strokeDasharray="4 4"
-                    x1={0}
-                    y1={size}
-                    x2={size}
-                    y2={0}
-                  />
-                  {/* dimmed ghost curves for inactive channels */}
-                  {ghostPaths.map(({ channel, d }) => (
+                    {/* active curve — visual only; clicks fall through to the
+                        SVG surface handler so the hit target is the whole grid */}
                     <path
-                      key={channel}
-                      d={d}
+                      d={activePath}
                       fill="none"
                       pointerEvents="none"
-                      stroke={CHANNEL_STROKE[channel]}
-                      strokeOpacity={0.25}
-                      strokeWidth={1.5}
+                      stroke={strokeColor}
+                      strokeWidth={2}
                     />
-                  ))}
-                  {/* active curve — visual only; clicks fall through to the
-                      SVG surface handler so the hit target is the whole grid */}
-                  <path
-                    d={activePath}
-                    fill="none"
-                    pointerEvents="none"
-                    stroke={strokeColor}
-                    strokeWidth={2}
-                  />
-                  {/* control points */}
-                  {sortedActive.map((p, i) => {
-                    const cx = p[0] * size;
-                    const cy = size - p[1] * size;
-                    const isEndpoint = i === 0 || i === lastIndex;
-                    return (
-                      <circle
-                        key={`pt-${i}`}
-                        // Read by `handleContextMenu` to identify which
-                        // node was right-clicked (vs. the empty surface).
-                        data-curve-index={i}
-                        cx={cx}
-                        cy={cy}
-                        r={6}
-                        fill="var(--background, #fff)"
-                        stroke={strokeColor}
-                        strokeWidth={2}
-                        style={{
-                          cursor: disabled
-                            ? "not-allowed"
-                            : isEndpoint
-                              ? "ns-resize"
-                              : "grab",
-                        }}
-                        onPointerDown={(event) =>
-                          handlePointPointerDown(event, i)
-                        }
-                        onPointerMove={handlePointPointerMove}
-                        onPointerUp={handlePointPointerUp}
-                        onPointerCancel={handlePointPointerUp}
-                        onDoubleClick={(event) =>
-                          handlePointDoubleClick(event, i)
-                        }
-                      />
-                    );
-                  })}
-                </svg>
-                </ContextMenuTrigger>
+                    {/* control points */}
+                    {sortedActive.map((p, i) => {
+                      const cx = p[0] * size;
+                      const cy = size - p[1] * size;
+                      const isEndpoint = i === 0 || i === lastIndex;
+                      return (
+                        <circle
+                          key={`pt-${i}`}
+                          // Read by `handleContextMenu` to identify which
+                          // node was right-clicked (vs. the empty surface).
+                          data-curve-index={i}
+                          cx={cx}
+                          cy={cy}
+                          r={6}
+                          fill="var(--background, #fff)"
+                          stroke={strokeColor}
+                          strokeWidth={2}
+                          style={{
+                            cursor: disabled
+                              ? "not-allowed"
+                              : isEndpoint
+                                ? "ns-resize"
+                                : "grab",
+                          }}
+                          onPointerDown={(event) =>
+                            handlePointPointerDown(event, i)
+                          }
+                          onPointerMove={handlePointPointerMove}
+                          onPointerUp={handlePointPointerUp}
+                          onPointerCancel={handlePointPointerUp}
+                          onDoubleClick={(event) =>
+                            handlePointDoubleClick(event, i)
+                          }
+                        />
+                      );
+                    })}
+                  </svg>
+                  }
+                />
                 <ContextMenuContent>
                   {contextTarget?.type === "node" ? (
                     <ContextMenuItem
@@ -619,14 +623,14 @@ export function CurvesPanel({
                         contextTarget.index === 0 ||
                         contextTarget.index === lastIndex
                       }
-                      onSelect={() => removePointAt(contextTarget.index)}
+                      onClick={() => removePointAt(contextTarget.index)}
                     >
                       Remove point
                     </ContextMenuItem>
                   ) : null}
                   {contextTarget?.type === "surface" ? (
                     <ContextMenuItem
-                      onSelect={() =>
+                      onClick={() =>
                         addPointAt(contextTarget.x, contextTarget.y)
                       }
                     >

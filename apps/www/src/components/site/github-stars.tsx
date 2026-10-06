@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { githubRepo, githubUrl } from "@/lib/site";
 
 import { GitHubIcon } from "./icons";
@@ -24,11 +24,15 @@ function format(count: number) {
 export async function GitHubStars() {
   const stars = await getStars();
   return (
-    <Button asChild className="gap-1.5 px-2" size="sm" variant="ghost">
-      <a aria-label="photocn on GitHub" href={githubUrl} rel="noreferrer" target="_blank">
-        <GitHubIcon className="size-4" />
-        {stars !== null ? <span className="tabular-nums text-muted-foreground">{format(stars)}</span> : null}
-      </a>
-    </Button>
+    <a
+      aria-label="photocn on GitHub"
+      className={buttonVariants({ size: "sm", variant: "ghost", className: "gap-1.5 px-2" })}
+      href={githubUrl}
+      rel="noreferrer"
+      target="_blank"
+    >
+      <GitHubIcon className="size-4" />
+      {stars !== null ? <span className="tabular-nums text-muted-foreground">{format(stars)}</span> : null}
+    </a>
   );
 }

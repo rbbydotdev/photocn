@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import { ImageEditorProvider, useImageEditor } from "photocn/react";
 
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ export default function FilterStripExample() {
 // A custom control built only from `useImageEditor()` — no photocn panel.
 function FilterStrip() {
   const { filters, isReady } = useImageEditor();
+  const strengthLabelId = useId();
   return (
     <div className="flex flex-col gap-3 border-t p-3">
       <div className="flex gap-2 overflow-x-auto pb-1">
@@ -41,12 +43,17 @@ function FilterStrip() {
         ))}
       </div>
       {filters.value.label ? (
-        <Slider
-          aria-label="Filter strength"
-          max={100}
-          onValueChange={([value]) => filters.setStrength((value ?? 0) / 100)}
-          value={[Math.round(filters.value.strength * 100)]}
-        />
+        <>
+          <span className="sr-only" id={strengthLabelId}>
+            Filter strength
+          </span>
+          <Slider
+            aria-labelledby={strengthLabelId}
+            max={100}
+            onValueChange={(next) => filters.setStrength(((typeof next === "number" ? next : next[0]) ?? 0) / 100)}
+            value={[Math.round(filters.value.strength * 100)]}
+          />
+        </>
       ) : null}
     </div>
   );

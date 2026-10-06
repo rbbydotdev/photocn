@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { CheckIcon, MaximizeIcon, TerminalIcon } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export function BlockPreview({
@@ -68,11 +68,15 @@ export function BlockPreview({
             <span className="hidden md:inline">{command}</span>
             <span className="md:hidden">{copied ? "Copied" : "Copy"}</span>
           </Button>
-          <Button asChild size="icon-sm" variant="ghost">
-            <a aria-label="Open in a new tab" href={`/view/${name}`} rel="noreferrer" target="_blank">
-              <MaximizeIcon />
-            </a>
-          </Button>
+          <a
+            aria-label="Open in a new tab"
+            className={buttonVariants({ size: "icon-sm", variant: "ghost" })}
+            href={`/view/${name}`}
+            rel="noreferrer"
+            target="_blank"
+          >
+            <MaximizeIcon />
+          </a>
         </div>
       </div>
       <div className="overflow-hidden rounded-xl border bg-muted/20">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, type ReactNode } from "react";
+import { useId, type ReactElement, type ReactNode } from "react";
 
 import { useControllableState } from "photocn/hooks";
 import {
@@ -311,8 +311,8 @@ function AdjustmentTabTrigger({
 }) {
   const Icon = section.icon;
 
-  // No Tooltip wrapper — TooltipTrigger asChild clobbers Radix Tabs'
-  // data-state, hiding the active underline. Use title for hover hints.
+  // Native `title` for hover hints; a tooltip trigger around the tab would
+  // add its own state attributes to it.
   return (
     <TabsTrigger
       aria-label={section.label}
@@ -439,19 +439,19 @@ function IconButtonTooltip({
   children,
   label,
 }: {
-  children: ReactNode;
+  children: ReactElement;
   label: string;
 }) {
   return (
     <Tooltip>
-      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipTrigger render={children} />
       <TooltipContent>{label}</TooltipContent>
     </Tooltip>
   );
 }
 
-function readSliderValue(nextValue: number[], fallback: number): number {
-  return nextValue[0] ?? fallback;
+function readSliderValue(nextValue: number | readonly number[], fallback: number): number {
+  return (typeof nextValue === "number" ? nextValue : nextValue[0]) ?? fallback;
 }
 
 function formatAdjustmentValue(value: number): string {

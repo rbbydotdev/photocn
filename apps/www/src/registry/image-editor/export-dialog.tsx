@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState, type ReactNode } from "react";
+import { useId, useState, type ReactElement, type ReactNode } from "react";
 import { DownloadIcon, Loader2Icon, UploadIcon } from "lucide-react";
 import {
   useImageEditor,
@@ -61,7 +61,7 @@ export const exportFormats = [
 
 export interface ImageEditorExportDialogProps {
   /** Element that opens the dialog. Defaults to an "Export" button. */
-  trigger?: ReactNode;
+  trigger?: ReactElement;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   defaultFormat?: ImageEditorExportFormat;
@@ -143,6 +143,7 @@ export function ImageEditorExportDialog({
             <FieldLabel id={`${id}-format`}>Format</FieldLabel>
             <FieldContent className="items-end">
               <Select
+                items={exportFormats}
                 onValueChange={(value) => {
                   const next = exportFormats.find((option) => option.value === value);
                   if (!next) return;
@@ -183,7 +184,7 @@ export function ImageEditorExportDialog({
                 aria-labelledby={`${id}-quality`}
                 max={100}
                 min={10}
-                onValueChange={(value) => setQuality((value[0] ?? 90) / 100)}
+                onValueChange={(value) => setQuality(((typeof value === "number" ? value : value[0]) ?? 90) / 100)}
                 step={1}
                 value={[Math.round(quality * 100)]}
               />
@@ -302,7 +303,7 @@ export function ImageEditorExportDialog({
   if (isMobile) {
     return (
       <Drawer onOpenChange={onOpenChange} open={open}>
-        <DrawerTrigger asChild>{triggerNode}</DrawerTrigger>
+        <DrawerTrigger render={triggerNode} />
         <DrawerContent className={className} data-slot="image-editor-export-dialog">
           <DrawerHeader className="text-left">
             <DrawerTitle>{title}</DrawerTitle>
@@ -317,7 +318,7 @@ export function ImageEditorExportDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>{triggerNode}</DialogTrigger>
+      <DialogTrigger render={triggerNode} />
       <DialogContent
         className={cn("sm:max-w-md", className)}
         data-slot="image-editor-export-dialog"

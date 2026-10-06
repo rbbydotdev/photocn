@@ -31,10 +31,10 @@ export function MobileNav({ className, docsNav }: { className?: string; docsNav:
   );
   return (
     <Sheet onOpenChange={setOpen} open={open}>
-      <SheetTrigger asChild>
-        <Button aria-label="Open menu" className={cn("size-10", className)} size="icon" variant="ghost">
-          <MenuIcon />
-        </Button>
+      <SheetTrigger
+        render={<Button aria-label="Open menu" className={cn("size-10", className)} size="icon" variant="ghost" />}
+      >
+        <MenuIcon />
       </SheetTrigger>
       <SheetContent className="w-[85vw] max-w-sm gap-0 overflow-y-auto rounded-r-xl p-0" side="left">
         <SheetHeader className="border-b">

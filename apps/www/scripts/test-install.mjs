@@ -4,7 +4,7 @@
 //   pnpm --filter www test:install --live   (photocn.dev + photocn from npm)
 //
 // 1. Packs the photocn engine and builds the registry against a local server.
-// 2. Creates a fresh Next.js app, runs `shadcn init -b radix`, registers
+// 2. Creates a fresh Next.js app, runs `shadcn init -b base`, registers
 //    @photocn, and `shadcn add`s every block.
 // 3. Renders each block on its own page, then typechecks, builds, and loads
 //    every page in a browser (WebGL canvas must render, no runtime errors).
@@ -69,7 +69,7 @@ try {
   if (tarball) pkg.pnpm.overrides = { photocn: `file:${tarball}` };
   writeFileSync(path.join(app, "package.json"), JSON.stringify(pkg, null, 2));
   run("pnpm install", app);
-  run("pnpm dlx shadcn@latest init -b radix -p nova -y --no-monorepo", app);
+  run("pnpm dlx shadcn@latest init -b base -p nova -y --no-monorepo", app);
   run(`pnpm dlx shadcn@latest registry add @photocn=${REGISTRY}/r/{name}.json`, app);
   run(`pnpm dlx shadcn@latest add -y ${blocks.map((b) => `@photocn/${b}`).join(" ")}`, app);
 

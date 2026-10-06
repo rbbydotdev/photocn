@@ -35,26 +35,22 @@ export function CopyPage({ url, markdown }: { url: string; markdown: string }) {
         Copy page
       </Button>
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button aria-label="More page options" className="-ml-px rounded-l-none" size="icon-sm" variant="outline">
-            <ChevronDownIcon />
-          </Button>
+        <DropdownMenuTrigger
+          render={
+            <Button aria-label="More page options" className="-ml-px rounded-l-none" size="icon-sm" variant="outline" />
+          }
+        >
+          <ChevronDownIcon />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-52">
-          <DropdownMenuItem asChild>
-            <a href={mdUrl} rel="noreferrer" target="_blank">
-              <FileTextIcon /> View as Markdown
-            </a>
+          <DropdownMenuItem render={<a href={mdUrl} rel="noreferrer" target="_blank" />}>
+            <FileTextIcon /> View as Markdown
           </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <a href={`https://chatgpt.com/?q=${prompt}`} rel="noreferrer" target="_blank">
-              <MessageSquareIcon /> Open in ChatGPT
-            </a>
+          <DropdownMenuItem render={<a href={`https://chatgpt.com/?q=${prompt}`} rel="noreferrer" target="_blank" />}>
+            <MessageSquareIcon /> Open in ChatGPT
           </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <a href={`https://claude.ai/new?q=${prompt}`} rel="noreferrer" target="_blank">
-              <MessageSquareIcon /> Open in Claude
-            </a>
+          <DropdownMenuItem render={<a href={`https://claude.ai/new?q=${prompt}`} rel="noreferrer" target="_blank" />}>
+            <MessageSquareIcon /> Open in Claude
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

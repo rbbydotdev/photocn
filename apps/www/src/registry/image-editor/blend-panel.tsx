@@ -247,33 +247,37 @@ function BlendImageSummary({
         <p className="text-xs text-muted-foreground">Blend image</p>
       </div>
       <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            disabled={disabled}
-            onClick={onChange}
-            size="sm"
-            type="button"
-            variant="ghost"
-          >
-            Change
-          </Button>
-        </TooltipTrigger>
+        <TooltipTrigger
+          render={
+            <Button
+              disabled={disabled}
+              onClick={onChange}
+              size="sm"
+              type="button"
+              variant="ghost"
+            >
+              Change
+            </Button>
+          }
+        />
         <TooltipContent>Pick a different blend image</TooltipContent>
       </Tooltip>
       {onClear ? (
         <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              aria-label="Clear blend image"
-              disabled={disabled}
-              onClick={onClear}
-              size="icon-sm"
-              type="button"
-              variant="ghost"
-            >
-              <XIcon aria-hidden="true" />
-            </Button>
-          </TooltipTrigger>
+          <TooltipTrigger
+            render={
+              <Button
+                aria-label="Clear blend image"
+                disabled={disabled}
+                onClick={onClear}
+                size="icon-sm"
+                type="button"
+                variant="ghost"
+              >
+                <XIcon aria-hidden="true" />
+              </Button>
+            }
+          />
           <TooltipContent>Clear blend image</TooltipContent>
         </Tooltip>
       ) : null}
@@ -281,8 +285,8 @@ function BlendImageSummary({
   );
 }
 
-function readSliderValue(nextValue: number[], fallback: number): number {
-  return nextValue[0] ?? fallback;
+function readSliderValue(nextValue: number | readonly number[], fallback: number): number {
+  return (typeof nextValue === "number" ? nextValue : nextValue[0]) ?? fallback;
 }
 
 function formatMix(value: number): string {

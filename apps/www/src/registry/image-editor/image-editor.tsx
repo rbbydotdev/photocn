@@ -190,12 +190,14 @@ export function ImageEditorStatusBadge() {
     return (
       <TooltipProvider>
       <Tooltip>
-        <TooltipTrigger asChild>
-          <Badge className="max-w-48" variant="destructive">
-            <AlertCircleIcon aria-hidden="true" />
-            <span className="truncate">{message}</span>
-          </Badge>
-        </TooltipTrigger>
+        <TooltipTrigger
+          render={
+            <Badge className="max-w-48" variant="destructive">
+              <AlertCircleIcon aria-hidden="true" />
+              <span className="truncate">{message}</span>
+            </Badge>
+          }
+        />
         <TooltipContent className="max-w-sm">{message}</TooltipContent>
       </Tooltip>
       </TooltipProvider>

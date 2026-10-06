@@ -6,11 +6,13 @@ order: 2
 ---
 ## 1. Set up shadcn/ui
 
-photocn uses the Radix version of shadcn/ui. New projects default to Base UI, so choose Radix when you set up:
+photocn is built on the [Base UI](https://base-ui.com) version of shadcn/ui, the default for new projects:
 
 ```bash
-npx shadcn@latest init -b radix
+npx shadcn@latest init -b base
 ```
+
+Already have a project? Check that the `style` in your `components.json` starts with `base-` (for example `base-nova`). photocn's components use Base UI's `render` prop, so they won't work in a project set up with Radix (`radix-*` styles).
 
 ## 2. Add the photocn registry
 

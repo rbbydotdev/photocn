@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import type { ReactNode } from "react";
+import { useId, type ReactNode } from "react";
 import type { CurveChannels, CurvePoint } from "photocn";
 import { ImageEditorProvider, useImageEditor } from "photocn/react";
 
@@ -76,17 +76,23 @@ export function Bento() {
 
 function StraightenTile() {
   const { geometry } = useImageEditor();
+  const labelId = useId();
   return (
     <div className="flex size-full flex-col pt-8">
       <ImageEditorCanvas className="min-h-0 flex-1" padding={12} showOpenButton={false} />
       <div className="flex items-center gap-3 border-t px-4 py-3 text-sm">
         <span className="w-14 tabular-nums text-muted-foreground">{geometry.value.straighten.toFixed(1)}°</span>
+        <span className="sr-only" id={labelId}>
+          Straighten
+        </span>
         <Slider
-          aria-label="Straighten"
+          aria-labelledby={labelId}
           max={45}
           min={-45}
-          onValueChange={([value]) => geometry.setStraighten(value ?? 0, { transient: true })}
-          onValueCommit={() => geometry.commit()}
+          onValueChange={(next) =>
+            geometry.setStraighten((typeof next === "number" ? next : next[0]) ?? 0, { transient: true })
+          }
+          onValueCommitted={() => geometry.commit()}
           step={0.1}
           value={[geometry.value.straighten]}
         />

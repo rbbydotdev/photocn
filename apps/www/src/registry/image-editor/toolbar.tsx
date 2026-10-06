@@ -94,10 +94,10 @@ export function EditorToolbar({
   className,
   onToolChange,
 }: EditorToolbarProps) {
-  const handleToolChange = (value: string) => {
-    if (value) {
-      onToolChange?.(value);
-    }
+  // Single selection: clicking the active tool again leaves it selected.
+  const handleToolChange = (value: string[]) => {
+    const next = value[0];
+    if (next) onToolChange?.(next);
   };
 
   return (
@@ -117,8 +117,7 @@ export function EditorToolbar({
             className="w-full min-w-0 has-[>*:nth-child(6)]:justify-between"
             onValueChange={handleToolChange}
             size="sm"
-            type="single"
-            value={activeTool}
+            value={activeTool ? [activeTool] : []}
             variant="outline"
           >
             {tools.map((tool) => (
@@ -167,18 +166,15 @@ function ToolbarToolItem({
 }) {
   const Icon = tool.icon;
 
-  // No Tooltip wrapper here — TooltipTrigger asChild merges its own
-  // `data-state="open|closed"` onto the ToggleGroupItem, clobbering
-  // Radix Toggle's `data-state="on|off"`. That made every active-state
-  // class (`data-[state=on]:...`) a no-op. Native `title` gives hover
-  // hints; aria-label keeps screen-reader support.
+  // Native `title` gives hover hints without wrapping the item in a
+  // tooltip trigger; aria-label keeps screen-reader support.
   return (
     <ToggleGroupItem
       aria-label={tool.label}
       // Strong active state — primary fill so the selected tool reads
       // unambiguously as "you are here" instead of looking like a hover.
       // Keeps hover at bg-accent for affordance.
-      className="min-w-0 flex-1 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary data-[state=on]:hover:text-primary-foreground data-[state=on]:shadow-inner data-[state=on]:[&_svg]:scale-110"
+      className="min-w-0 flex-1 data-pressed:bg-primary data-pressed:text-primary-foreground data-pressed:hover:bg-primary data-pressed:hover:text-primary-foreground data-pressed:shadow-inner data-pressed:[&_svg]:scale-110"
       disabled={disabled}
       title={tool.label}
       value={tool.value}
@@ -207,9 +203,7 @@ function ToolbarActionButton({ action }: { action: EditorToolbarAction }) {
 
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        {action.disabled ? <span className="inline-flex">{button}</span> : button}
-      </TooltipTrigger>
+      <TooltipTrigger render={action.disabled ? <span className="inline-flex">{button}</span> : button} />
       <TooltipContent side="bottom">{action.label}</TooltipContent>
     </Tooltip>
   );
@@ -273,9 +267,7 @@ function EditorActionButton({
   return (
     <TooltipProvider>
       <Tooltip>
-        <TooltipTrigger asChild>
-          {disabled ? <span className="inline-flex">{button}</span> : button}
-        </TooltipTrigger>
+        <TooltipTrigger render={disabled ? <span className="inline-flex">{button}</span> : button} />
         <TooltipContent side="bottom">{label}</TooltipContent>
       </Tooltip>
     </TooltipProvider>

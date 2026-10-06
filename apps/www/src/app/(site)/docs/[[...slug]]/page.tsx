@@ -8,7 +8,7 @@ import { ComponentPreview } from "@/components/site/component-preview";
 import { CopyPage } from "@/components/site/copy-page";
 import { DocsToc } from "@/components/site/docs-toc";
 import { InstallCommand } from "@/components/site/install-command";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { docs, getDoc, neighbors } from "@/lib/docs";
 import { siteUrl } from "@/lib/site";
 
@@ -69,20 +69,16 @@ export default async function DocPage({ params }: Props) {
         </div>
         <nav aria-label="Pagination" className="mt-16 flex justify-between gap-4 border-t pt-6">
           {prev ? (
-            <Button asChild variant="ghost">
-              <Link href={prev.url}>
-                <ChevronLeftIcon data-icon="inline-start" /> {prev.title}
-              </Link>
-            </Button>
+            <Link className={buttonVariants({ variant: "ghost" })} href={prev.url}>
+              <ChevronLeftIcon data-icon="inline-start" /> {prev.title}
+            </Link>
           ) : (
             <span />
           )}
           {next ? (
-            <Button asChild variant="ghost">
-              <Link href={next.url}>
-                {next.title} <ChevronRightIcon data-icon="inline-end" />
-              </Link>
-            </Button>
+            <Link className={buttonVariants({ variant: "ghost" })} href={next.url}>
+              {next.title} <ChevronRightIcon data-icon="inline-end" />
+            </Link>
           ) : null}
         </nav>
       </article>
