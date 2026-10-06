@@ -10,13 +10,13 @@ import { ImageEditor } from "@/registry/image-editor/image-editor";
 export default function ControlledExample() {
   const [recipe, setRecipe] = useState<RecipeV1 | null>(null);
   return (
-    <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
+    <div className="flex flex-col gap-4">
       <ImageEditor
         className="h-[600px] overflow-hidden rounded-xl border"
         onParamsChange={(params: EditorParams) => setRecipe(buildRecipe(params))}
         src="/samples/mountain-lake.jpg"
       />
-      <pre className="max-h-[600px] overflow-auto rounded-xl border bg-muted/40 p-3 font-mono text-xs">
+      <pre className="max-h-72 overflow-auto rounded-xl border bg-muted/40 p-3 font-mono text-xs">
         {recipe ? JSON.stringify(recipe, null, 2) : "// Move a slider…"}
       </pre>
     </div>

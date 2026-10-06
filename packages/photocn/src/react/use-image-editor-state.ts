@@ -34,6 +34,8 @@ import {
 } from "../compose";
 import {
   createExifOutputBlob,
+  loadImage,
+  toPersistentImage,
   type BrowserExifHandle,
   type BrowserImageInput,
   type BrowserImageInputResult,
@@ -313,7 +315,11 @@ export interface ImageEditorApi {
   blend: {
     value: BlendValue;
     hasImage: boolean;
-    setImage: (image: HTMLImageElement | null) => void;
+    /**
+     * Blend a second image in. A picked file is re-encoded as a data: URL
+     * (≤2048px) so the edit, and its recipe, can be saved and reloaded.
+     */
+    setImage: (image: HTMLImageElement | null) => Promise<void>;
     setMix: (mix: number) => void;
     reset: () => void;
   };
@@ -781,9 +787,25 @@ export function useImageEditorState(
     }
   };
 
+  // ── Blend ──────────────────────────────────────────────────────────────
+  const blendTokenRef = useRef(0);
+  const setBlendImage = async (blendImage: HTMLImageElement | null) => {
+    const token = ++blendTokenRef.current;
+    const persistent = blendImage ? await toPersistentImage(blendImage) : null;
+    if (token !== blendTokenRef.current) return;
+    patchNow("blender", { blendmap: persistent ?? 0 });
+  };
+
   // ── Recipes ────────────────────────────────────────────────────────────
   const applyRecipeAsync = async (recipe: RecipeV1) => {
     const next = applyRecipe(paramsRef.current, recipe);
+    if (recipe.blend?.src) {
+      try {
+        next.blender.blendmap = await loadImage(recipe.blend.src);
+      } catch {
+        next.blender.blendmap = 0;
+      }
+    }
     if (recipe.filters?.label) {
       const preset = findFilterPreset(recipe.filters.label, filterPresets);
       try {
@@ -971,9 +993,12 @@ export function useImageEditorState(
     blend: {
       value: { blendMix: params.blender.blendmix ?? 0.5 },
       hasImage: Boolean(params.blender.blendmap),
-      setImage: (blendImage) => patchNow("blender", { blendmap: blendImage ?? 0 }),
+      setImage: setBlendImage,
       setMix: (mix) => patchTransient("blender", { blendmix: mix }),
-      reset: () => patchNow("blender", { blendmap: 0, blendmix: 0.5 }),
+      reset: () => {
+        blendTokenRef.current++;
+        patchNow("blender", { blendmap: 0, blendmix: 0.5 });
+      },
     },
 
     blur: {

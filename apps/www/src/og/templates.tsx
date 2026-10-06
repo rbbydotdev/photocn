@@ -69,8 +69,8 @@ function Command({ fontSize }: { fontSize: number }) {
         alignItems: "center",
         gap: fontSize * 0.6,
         padding: `${fontSize * 0.55}px ${fontSize * 0.9}px`,
-        borderRadius: 10,
-        border: `1px solid ${LINE}`,
+        borderRadius: fontSize * 0.5,
+        border: `1.5px solid ${LINE}`,
         backgroundColor: "rgba(9,9,10,0.75)",
         fontFamily: "Geist Mono",
         fontSize,
@@ -88,7 +88,7 @@ function Stack({ fontSize }: { fontSize: number }) {
     <div style={{ display: "flex", gap: fontSize * 0.5, fontFamily: "Geist Mono", fontSize, color: MUTED }}>
       {STACK.map((item, i) => (
         <span key={item} style={{ display: "flex", gap: fontSize * 0.5 }}>
-          {i > 0 ? <span style={{ color: "rgba(161,161,170,0.45)" }}>·</span> : null}
+          {i > 0 ? <span style={{ color: ACID }}>·</span> : null}
           {item}
         </span>
       ))}
@@ -124,22 +124,24 @@ export function Banner({
         overflow: "hidden",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 16 * unit, marginTop: 52 * unit }}>
-        <Logo size={58 * unit} />
-        <div style={{ fontSize: 70 * unit, fontWeight: 700, letterSpacing: "-0.045em" }}>photocn</div>
+      <div style={{ display: "flex", alignItems: "center", gap: 16 * unit, marginTop: 40 * unit }}>
+        <Logo size={62 * unit} />
+        <div style={{ fontSize: 76 * unit, fontWeight: 700, letterSpacing: "-0.045em" }}>photocn</div>
       </div>
-      <div style={{ fontSize: 30 * unit, fontWeight: 500, letterSpacing: "-0.02em", marginTop: 10 * unit }}>
+      <div style={{ fontSize: 42 * unit, fontWeight: 500, letterSpacing: "-0.025em", marginTop: 6 * unit }}>
         {TAGLINE}
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 22 * unit, marginTop: 20 * unit }}>
-        <Command fontSize={17 * unit} />
-        <Stack fontSize={16 * unit} />
+      <div style={{ display: "flex", marginTop: 20 * unit }}>
+        <Command fontSize={30 * unit} />
+      </div>
+      <div style={{ display: "flex", marginTop: 16 * unit }}>
+        <Stack fontSize={26 * unit} />
       </div>
       <div
         style={{
           position: "absolute",
           left: (width - shotWidth) / 2,
-          top: Math.round(height * 0.5),
+          top: Math.round(height * 0.58),
           width: shotWidth,
           display: "flex",
         }}
@@ -194,34 +196,35 @@ export function DocOg({
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
-        padding: 72,
+        padding: 64,
         backgroundImage: darkroom,
         color: PAPER,
         fontFamily: "Geist",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-        <Logo size={40} />
-        <div style={{ fontSize: 34, fontWeight: 700, letterSpacing: "-0.035em" }}>photocn</div>
-        <div style={{ fontSize: 24, color: MUTED, marginLeft: 8, fontFamily: "Geist Mono" }}>/ {section.toLowerCase()}</div>
+      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        <Logo size={50} />
+        <div style={{ fontSize: 44, fontWeight: 700, letterSpacing: "-0.04em" }}>photocn</div>
+        <div style={{ fontSize: 34, color: MUTED, marginLeft: 6, fontFamily: "Geist Mono" }}>/ {section.toLowerCase()}</div>
+        <div style={{ flexGrow: 1 }} />
+        <div style={{ fontSize: 30, color: MUTED, fontFamily: "Geist Mono" }}>photocn.dev</div>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 22, position: "relative", padding: "30px 34px" }}>
         <div style={{ position: "absolute", inset: 0, border: `1.5px solid ${ACID}`, display: "flex" }}>
           <CropHandles />
         </div>
-        <div style={{ fontSize: 78, fontWeight: 700, letterSpacing: "-0.04em", lineHeight: 1.04 }}>{title}</div>
-        <div style={{ fontSize: 31, color: MUTED, lineHeight: 1.35 }}>{description}</div>
+        <div style={{ fontSize: 84, fontWeight: 700, letterSpacing: "-0.04em", lineHeight: 1.02 }}>{title}</div>
+        <div style={{ fontSize: 36, color: "#c4c4c9", lineHeight: 1.3 }}>{description}</div>
       </div>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div style={{ display: "flex", alignItems: "center" }}>
         {item ? (
-          <div style={{ display: "flex", gap: 12, fontFamily: "Geist Mono", fontSize: 24 }}>
+          <div style={{ display: "flex", gap: 16, fontFamily: "Geist Mono", fontSize: item.length > 18 ? 28 : 32 }}>
             <span style={{ color: ACID }}>$</span>
             <span>npx shadcn add @photocn/{item}</span>
           </div>
         ) : (
-          <Stack fontSize={22} />
+          <Stack fontSize={30} />
         )}
-        <div style={{ fontSize: 22, color: MUTED, fontFamily: "Geist Mono" }}>photocn.dev</div>
       </div>
     </div>
   );

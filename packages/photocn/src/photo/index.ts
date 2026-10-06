@@ -18,7 +18,9 @@ import {
   createExifOutputBlob,
   createMiniGlEditor,
   decodeImageInput,
+  loadImage,
   readExifMetadata,
+  toPersistentImage,
   type BrowserExifHandle,
   type BrowserImageInput,
   type DecodeImageInputOptions,
@@ -175,6 +177,7 @@ export class Photo {
   #attaching: Promise<void> | null = null;
   #frame: number | null = null;
   #filterToken = 0;
+  #blendToken = 0;
   #pending = new Set<Promise<unknown>>();
   #histogram: RgbHistogram | null = null;
   #disposed = false;
@@ -221,6 +224,9 @@ export class Photo {
       const preset = this.#findPreset(recipe.filters.label);
       next.filters.opt = preset ? await preset.load().catch(() => 0 as const) : 0;
     }
+    if (recipe.blend?.src) {
+      next.blender.blendmap = await loadImage(recipe.blend.src).catch(() => 0 as const);
+    }
     return this.#commit(next);
   }
 
@@ -249,6 +255,7 @@ export class Photo {
   /** Remove every edit (one undo step). */
   reset(): this {
     this.#filterToken++;
+    this.#blendToken++;
     return this.#commit(createEditorParams());
   }
 
@@ -307,6 +314,25 @@ export class Photo {
   /** Tone curves `[rgb, r, g, b]`, each a list of `[input, output]` points (0..1) or `null`. */
   curves(channels: CurveChannels | null): this {
     return this.#commit(patch(this.#params, "curve", { curvepoints: channels ?? 0 }));
+  }
+
+  /**
+   * Blend a second image over the photo (a URL or an `<img>`) at `mix` 0..1.
+   * `null` removes it. Picked files are kept as a data: URL so the recipe
+   * can carry them.
+   */
+  blend(image: HTMLImageElement | string | null, mix = 0.5): this {
+    const token = ++this.#blendToken;
+    if (image === null) {
+      return this.#commit(patch(this.#params, "blender", { blendmap: 0, blendmix: 0.5 }));
+    }
+    this.#track(
+      (typeof image === "string" ? loadImage(image) : toPersistentImage(image)).then((loaded) => {
+        if (token !== this.#blendToken || this.#disposed) return;
+        this.#commit(patch(this.#params, "blender", { blendmap: loaded, blendmix: clamp01(mix) }));
+      }),
+    );
+    return this;
   }
 
   /** Lens / gaussian blur with a sharp focus area. */

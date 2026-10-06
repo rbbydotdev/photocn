@@ -59,14 +59,26 @@ const SplineCtor = Spline as unknown as new (points: SplinePoint[]) => Spline
         return Math.max(lo, Math.min(value, hi));
     }
 
+/**
+ * 256-entry lookup tables for [rgb, red, green, blue] curves (each a list of
+ * [input, output] points in 0..1, or null for identity). A channel curve is
+ * applied first, then the RGB curve on top, like Photoshop / Lightroom.
+ */
+export function curveLookupTables(array: CurveChannels): [number[], number[], number[]] {
+    const identity = Array.from({ length: 256 }, (_, i) => i)
+    const master = array[0] ? splineInterpolate(array[0] as SplinePoint[]) : identity
+    const channel = (points?: SplinePoint[] | null) => {
+        const own = points ? splineInterpolate(points) : identity
+        return own.map((value) => master[value])
+    }
+    return [channel(array[1]), channel(array[2]), channel(array[3])]
+}
+
 //red,green,blue   arrays [[0,0],...,[1,1]] describing channel curve
 export function filterCurves(mini: MiniGLFilterHost, array: CurveChannels) {
   //console.log('filterCurves')
-    if(array.every(e=>e===null)) return //console.error('curves: need at least one array')
-    if(!array[0]) array[0]=[[0,0],[1,1]] //linear identity curve
-    const red = splineInterpolate((array[1]||array[0]) as SplinePoint[]);
-    const green = splineInterpolate((array[2]||array[0]) as SplinePoint[]);
-    const blue = splineInterpolate((array[3]||array[0]) as SplinePoint[]);
+    if(array.every(e=>!e)) return //console.error('curves: need at least one array')
+    const [red, green, blue] = curveLookupTables(array)
     if(red.length!==256 || green.length!==256 || blue.length!==256) return console.error('curves: input unknown')
 
     var curveMap = [];

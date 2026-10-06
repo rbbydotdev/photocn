@@ -199,3 +199,41 @@ function nameFromUrl(value: string): string | undefined {
     return name ? decodeURIComponent(name) : undefined;
   }
 }
+
+export interface PersistentImageOptions {
+  /** Long-edge cap in px. Default 2048. */
+  maxEdge?: number;
+  /** Default `"image/webp"` (keeps transparency). */
+  type?: string;
+  quality?: number;
+}
+
+/**
+ * An image whose `src` survives a reload: URLs are kept as they are, while
+ * `blob:` images (picked files) are re-encoded as a data: URL (base64),
+ * downscaled to `maxEdge`. Used to save a blend image inside a recipe.
+ */
+export async function toPersistentImage(
+  image: HTMLImageElement,
+  { maxEdge = 2048, type = "image/webp", quality = 0.9 }: PersistentImageOptions = {},
+): Promise<HTMLImageElement> {
+  const src = image.currentSrc || image.src;
+  if (src && !src.startsWith("blob:")) return image;
+  const width = image.naturalWidth || image.width;
+  const height = image.naturalHeight || image.height;
+  const scale = Math.min(1, maxEdge / Math.max(width, height, 1));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(width * scale));
+  canvas.height = Math.max(1, Math.round(height * scale));
+  canvas.getContext("2d")?.drawImage(image, 0, 0, canvas.width, canvas.height);
+  return loadImage(canvas.toDataURL(type, quality));
+}
+
+/** Load an image from a URL or data: URL. */
+export async function loadImage(src: string): Promise<HTMLImageElement> {
+  const image = new Image();
+  image.crossOrigin = "anonymous";
+  image.src = src;
+  await image.decode();
+  return image;
+}

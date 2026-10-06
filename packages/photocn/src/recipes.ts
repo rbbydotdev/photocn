@@ -3,6 +3,7 @@ import {
   createEditorParams,
   type BlurParams,
   type ColorParams,
+  type CurveChannels,
   type EditorParams,
   type EffectParams,
   type LightParams,
@@ -15,13 +16,24 @@ export interface RecipeV1 {
   lights?: Partial<LightParams>;
   colors?: Partial<ColorParams>;
   effects?: Partial<EffectParams>;
-  // Mirror legacy: persist strength/lensout but not centerX/centerY
   blur?: Partial<
     Pick<
       BlurParams,
-      "bokehstrength" | "bokehlensout" | "gaussianstrength" | "gaussianlensout"
+      | "bokehstrength"
+      | "bokehlensout"
+      | "gaussianstrength"
+      | "gaussianlensout"
+      | "centerX"
+      | "centerY"
     >
   >;
+  /** Tone curves `[rgb, r, g, b]` (`null` = straight line). */
+  curves?: CurveChannels;
+  /**
+   * Blended second image: its URL (or a data: URL for picked files) and the
+   * mix, 0..1. Applying a recipe loads the image back.
+   */
+  blend?: { src: string; mix: number };
   /** `strength` is 0..1 (omitted = full strength). */
   filters?: { label: string; strength?: number };
   /** Crop, straighten, perspective, turns and flips (only non-default fields). */
@@ -33,6 +45,8 @@ const BLUR_KEYS = [
   "bokehlensout",
   "gaussianstrength",
   "gaussianlensout",
+  "centerX",
+  "centerY",
 ] as const satisfies readonly (keyof BlurParams)[];
 
 type SectionRecord = Record<string, unknown>;
@@ -82,8 +96,13 @@ export function buildRecipe(
       : undefined;
 
   const geometry = diffGeometry(params.geometry);
+  const curves = diffCurves(params.curve.curvepoints);
+  const blendSrc = imageSource(params.blender.blendmap);
+  const blend = blendSrc ? { src: blendSrc, mix: params.blender.blendmix } : undefined;
 
-  if (!lights && !colors && !effects && !blur && !filters && !geometry) return null;
+  if (!lights && !colors && !effects && !blur && !filters && !geometry && !curves && !blend) {
+    return null;
+  }
 
   const recipe: RecipeV1 = { version: 1 };
   if (name) recipe.name = name;
@@ -91,6 +110,8 @@ export function buildRecipe(
   if (colors) recipe.colors = colors;
   if (effects) recipe.effects = effects;
   if (blur) recipe.blur = blur;
+  if (curves) recipe.curves = curves;
+  if (blend) recipe.blend = blend;
   if (filters) recipe.filters = filters;
   if (geometry) recipe.geometry = geometry;
   return recipe;
@@ -108,6 +129,12 @@ export function applyRecipe(
   if (recipe.colors) Object.assign(next.colors, recipe.colors);
   if (recipe.effects) Object.assign(next.effects, recipe.effects);
   if (recipe.blur) Object.assign(next.blur, recipe.blur);
+  // Curves, blend and filter describe the look: a recipe without them clears them.
+  next.curve.curvepoints = recipe.curves ?? 0;
+  // The blend image is loaded asynchronously by the caller (see
+  // `loadRecipeBlend`); keep the mix and clear the old image.
+  next.blender.blendmap = 0;
+  next.blender.blendmix = recipe.blend?.mix ?? 0.5;
   // Geometry is normalized, so it applies to any photo. Recipes without it
   // leave the current crop alone.
   if (recipe.geometry) next.geometry = { ...createGeometry(), ...recipe.geometry };
@@ -155,6 +182,28 @@ export function downloadRecipe(recipe: RecipeV1, filename?: string): void {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+/** URL of an image a recipe can reload (`blob:` URLs die with the page). */
+function imageSource(image: CanvasImageSource | 0): string | undefined {
+  if (!image || typeof image !== "object" || !("src" in image)) return undefined;
+  const src = (image as HTMLImageElement).currentSrc || (image as HTMLImageElement).src;
+  return src && !src.startsWith("blob:") ? src : undefined;
+}
+
+const isStraight = (points: CurveChannels[number]) =>
+  !points ||
+  (points.length === 2 &&
+    points[0]![0] === 0 &&
+    points[0]![1] === 0 &&
+    points[1]![0] === 1 &&
+    points[1]![1] === 1);
+
+function diffCurves(curvepoints: CurveChannels | 0): CurveChannels | undefined {
+  if (!curvepoints || curvepoints.every(isStraight)) return undefined;
+  return curvepoints.map((points) =>
+    isStraight(points) ? null : points!.map(([x, y]) => [x, y]),
+  ) as CurveChannels;
 }
 
 function diffGeometry(geometry: GeometryParams): Partial<GeometryParams> | undefined {

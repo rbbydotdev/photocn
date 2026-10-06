@@ -101,7 +101,7 @@ const line: CurvePoint[] = [
 ];
 const curvePresets: { label: string; rgb: CurvePoint[] }[] = [
   { label: "Linear", rgb: line },
-  { label: "Contrast", rgb: [[0, 0], [0.25, 0.18], [0.75, 0.84], [1, 1]] },
+  { label: "Contrast", rgb: [[0, 0], [0.25, 0.1], [0.75, 0.9], [1, 1]] },
   { label: "Fade", rgb: [[0, 0.12], [0.5, 0.52], [1, 0.92]] },
   { label: "Bright", rgb: [[0, 0], [0.4, 0.55], [1, 1]] },
 ];

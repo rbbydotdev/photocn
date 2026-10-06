@@ -52,7 +52,17 @@ const defaultProxyMaxDim: ProxyMaxDimResolver = ({ image, canvas }) => {
     typeof window !== "undefined" && window.devicePixelRatio
       ? window.devicePixelRatio
       : 1;
-  const cssLong = Math.max(canvas.clientWidth, canvas.clientHeight, 1);
+  // Measure the canvas's container too: right after mount the canvas itself
+  // can still have its default 300×150 size, which made the proxy far
+  // smaller than the screen and the live preview soft.
+  const host = canvas.parentElement;
+  const cssLong = Math.max(
+    canvas.clientWidth,
+    canvas.clientHeight,
+    host?.clientWidth ?? 0,
+    host?.clientHeight ?? 0,
+    1,
+  );
   const target = Math.round(cssLong * dpr * 1.2);
   const imageLong = Math.max(image.width, image.height);
   // Floor 600 keeps proxy useful on small/hidden canvases (e.g. mid-mount,
