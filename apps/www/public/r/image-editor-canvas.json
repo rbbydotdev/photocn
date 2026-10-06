@@ -5,7 +5,7 @@
   "description": "The image stage: crop frame and perspective corners in the crop tool; zoom, blur focus, drag-and-drop and hold-to-compare everywhere else.",
   "dependencies": [
     "lucide-react",
-    "photocn@^0.1.0"
+    "photocn@^0.1.1"
   ],
   "registryDependencies": [
     "alert",

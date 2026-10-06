@@ -4,7 +4,7 @@
   "title": "Mobile editor",
   "description": "Photo first, tools at the bottom, controls in a sheet.",
   "dependencies": [
-    "photocn@^0.1.0"
+    "photocn@^0.1.1"
   ],
   "registryDependencies": [
     "https://photocn.dev/r/image-editor.json"

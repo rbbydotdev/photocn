@@ -5,7 +5,7 @@
   "description": "Quarter turns, flips, aspect ratios, straighten and perspective. Non-destructive: reopen and widen the crop any time.",
   "dependencies": [
     "lucide-react",
-    "photocn@^0.1.0"
+    "photocn@^0.1.1"
   ],
   "registryDependencies": [
     "button",

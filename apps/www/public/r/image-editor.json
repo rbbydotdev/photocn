@@ -5,7 +5,7 @@
   "description": "The complete photo editor: toolbar, canvas, tool switcher, histogram and every panel. Drop it in and go.",
   "dependencies": [
     "lucide-react",
-    "photocn@^0.1.0"
+    "photocn@^0.1.1"
   ],
   "registryDependencies": [
     "badge",

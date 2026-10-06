@@ -5,7 +5,7 @@
   "description": "Phone layout: canvas first, a bottom tool bar, and panels in a bottom sheet that keeps the photo touchable.",
   "dependencies": [
     "lucide-react",
-    "photocn@^0.1.0"
+    "photocn@^0.1.1"
   ],
   "registryDependencies": [
     "button",

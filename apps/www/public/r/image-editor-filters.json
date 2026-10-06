@@ -5,7 +5,7 @@
   "description": "LUT and color-matrix presets with a strength slider.",
   "dependencies": [
     "lucide-react",
-    "photocn@^0.1.0"
+    "photocn@^0.1.1"
   ],
   "registryDependencies": [
     "button",

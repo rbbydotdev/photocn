@@ -5,7 +5,7 @@
   "description": "Pick a photo, frame it in a square, save a 512px avatar.",
   "dependencies": [
     "lucide-react",
-    "photocn@^0.1.0"
+    "photocn@^0.1.1"
   ],
   "registryDependencies": [
     "button",

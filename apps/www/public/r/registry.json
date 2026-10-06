@@ -10,7 +10,7 @@
       "description": "The complete photo editor: toolbar, canvas, tool switcher, histogram and every panel. Drop it in and go.",
       "dependencies": [
         "lucide-react",
-        "photocn@^0.1.0"
+        "photocn@^0.1.1"
       ],
       "registryDependencies": [
         "badge",
@@ -62,7 +62,7 @@
       "description": "Phone layout: canvas first, a bottom tool bar, and panels in a bottom sheet that keeps the photo touchable.",
       "dependencies": [
         "lucide-react",
-        "photocn@^0.1.0"
+        "photocn@^0.1.1"
       ],
       "registryDependencies": [
         "button",
@@ -91,7 +91,7 @@
       "description": "The image stage: crop frame and perspective corners in the crop tool; zoom, blur focus, drag-and-drop and hold-to-compare everywhere else.",
       "dependencies": [
         "lucide-react",
-        "photocn@^0.1.0"
+        "photocn@^0.1.1"
       ],
       "registryDependencies": [
         "alert",
@@ -125,7 +125,7 @@
       "description": "Tool switcher plus undo, redo, open, reset and compare buttons.",
       "dependencies": [
         "lucide-react",
-        "photocn@^0.1.0"
+        "photocn@^0.1.1"
       ],
       "registryDependencies": [
         "button",
@@ -149,7 +149,7 @@
       "title": "Histogram",
       "description": "Live RGB histogram of the rendered image.",
       "dependencies": [
-        "photocn@^0.1.0"
+        "photocn@^0.1.1"
       ],
       "registryDependencies": [],
       "files": [
@@ -169,7 +169,7 @@
       "title": "Tool Panel",
       "description": "Renders the panel for the active tool; swap or add panels per tool.",
       "dependencies": [
-        "photocn@^0.1.0"
+        "photocn@^0.1.1"
       ],
       "registryDependencies": [
         "https://photocn.dev/r/image-editor-adjustments.json",
@@ -221,7 +221,7 @@
       "description": "Light, color and effect sliders.",
       "dependencies": [
         "lucide-react",
-        "photocn@^0.1.0"
+        "photocn@^0.1.1"
       ],
       "registryDependencies": [
         "button",
@@ -250,7 +250,7 @@
       "description": "LUT and color-matrix presets with a strength slider.",
       "dependencies": [
         "lucide-react",
-        "photocn@^0.1.0"
+        "photocn@^0.1.1"
       ],
       "registryDependencies": [
         "button",
@@ -276,7 +276,7 @@
       "title": "Curves",
       "description": "RGB and per-channel tone curves over a live histogram.",
       "dependencies": [
-        "photocn@^0.1.0"
+        "photocn@^0.1.1"
       ],
       "registryDependencies": [
         "context-menu",
@@ -303,7 +303,7 @@
       "description": "Bokeh and gaussian lens blur with a draggable focus point.",
       "dependencies": [
         "lucide-react",
-        "photocn@^0.1.0"
+        "photocn@^0.1.1"
       ],
       "registryDependencies": [
         "field",
@@ -331,7 +331,7 @@
       "description": "Quarter turns, flips, aspect ratios, straighten and perspective. Non-destructive: reopen and widen the crop any time.",
       "dependencies": [
         "lucide-react",
-        "photocn@^0.1.0"
+        "photocn@^0.1.1"
       ],
       "registryDependencies": [
         "button",
@@ -366,7 +366,7 @@
       "description": "Blend a second image into the photo.",
       "dependencies": [
         "lucide-react",
-        "photocn@^0.1.0"
+        "photocn@^0.1.1"
       ],
       "registryDependencies": [
         "button",
@@ -392,7 +392,7 @@
       "title": "Metadata",
       "description": "File info and EXIF of the open image.",
       "dependencies": [
-        "photocn@^0.1.0"
+        "photocn@^0.1.1"
       ],
       "registryDependencies": [
         "alert",
@@ -419,7 +419,7 @@
       "description": "Format, quality and output size; downloads or saves the result.",
       "dependencies": [
         "lucide-react",
-        "photocn@^0.1.0"
+        "photocn@^0.1.1"
       ],
       "registryDependencies": [
         "alert",
@@ -450,7 +450,7 @@
       "description": "Save a look as JSON and re-apply it to any photo.",
       "dependencies": [
         "lucide-react",
-        "photocn@^0.1.0"
+        "photocn@^0.1.1"
       ],
       "registryDependencies": [
         "button",
@@ -474,7 +474,7 @@
       "description": "Cmd+K palette for tools, history and filters.",
       "dependencies": [
         "lucide-react",
-        "photocn@^0.1.0"
+        "photocn@^0.1.1"
       ],
       "registryDependencies": [
         "command",
@@ -498,7 +498,7 @@
       "description": "Floating render stats for tuning the worker renderer.",
       "dependencies": [
         "lucide-react",
-        "photocn@^0.1.0"
+        "photocn@^0.1.1"
       ],
       "registryDependencies": [
         "button",
@@ -524,7 +524,7 @@
       "title": "Editor",
       "description": "The full editor, filling the screen, with a ⌘K command menu.",
       "dependencies": [
-        "photocn@^0.1.0"
+        "photocn@^0.1.1"
       ],
       "registryDependencies": [
         "https://photocn.dev/r/image-editor-command-menu.json",
@@ -548,7 +548,7 @@
       "description": "Adjust, filters and crop, plus export. Nothing else.",
       "dependencies": [
         "lucide-react",
-        "photocn@^0.1.0"
+        "photocn@^0.1.1"
       ],
       "registryDependencies": [
         "https://photocn.dev/r/image-editor-adjustments.json",
@@ -575,7 +575,7 @@
       "title": "Mobile editor",
       "description": "Photo first, tools at the bottom, controls in a sheet.",
       "dependencies": [
-        "photocn@^0.1.0"
+        "photocn@^0.1.1"
       ],
       "registryDependencies": [
         "https://photocn.dev/r/image-editor.json"
@@ -598,7 +598,7 @@
       "description": "Pick a photo, frame it in a square, save a 512px avatar.",
       "dependencies": [
         "lucide-react",
-        "photocn@^0.1.0"
+        "photocn@^0.1.1"
       ],
       "registryDependencies": [
         "button",
@@ -623,7 +623,7 @@
       "description": "Drop a photo, edit it, then upload the result.",
       "dependencies": [
         "lucide-react",
-        "photocn@^0.1.0"
+        "photocn@^0.1.1"
       ],
       "registryDependencies": [
         "button",
@@ -647,7 +647,7 @@
       "title": "Filter picker",
       "description": "A phone-style row of looks with a strength slider.",
       "dependencies": [
-        "photocn@^0.1.0"
+        "photocn@^0.1.1"
       ],
       "registryDependencies": [
         "button",
@@ -672,7 +672,7 @@
       "title": "Before / after",
       "description": "Drag to compare the original with the edit.",
       "dependencies": [
-        "photocn@^0.1.0"
+        "photocn@^0.1.1"
       ],
       "registryDependencies": [],
       "files": [
@@ -693,7 +693,7 @@
       "description": "Choose one look and apply it to many photos at once.",
       "dependencies": [
         "lucide-react",
-        "photocn@^0.1.0"
+        "photocn@^0.1.1"
       ],
       "registryDependencies": [
         "button",

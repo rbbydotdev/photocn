@@ -4,7 +4,7 @@
   "title": "Metadata",
   "description": "File info and EXIF of the open image.",
   "dependencies": [
-    "photocn@^0.1.0"
+    "photocn@^0.1.1"
   ],
   "registryDependencies": [
     "alert",

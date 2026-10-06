@@ -5,7 +5,7 @@
   "description": "Choose one look and apply it to many photos at once.",
   "dependencies": [
     "lucide-react",
-    "photocn@^0.1.0"
+    "photocn@^0.1.1"
   ],
   "registryDependencies": [
     "button",

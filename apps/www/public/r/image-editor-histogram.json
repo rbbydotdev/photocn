@@ -4,7 +4,7 @@
   "title": "Histogram",
   "description": "Live RGB histogram of the rendered image.",
   "dependencies": [
-    "photocn@^0.1.0"
+    "photocn@^0.1.1"
   ],
   "registryDependencies": [],
   "files": [
