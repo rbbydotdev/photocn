@@ -1,3 +1,5 @@
+// Derived from mini-photo-editor (https://github.com/xdadda/mini-photo-editor),
+// MIT © 2025 xdadda. See THIRD_PARTY_NOTICES.md.
 import { Shader } from '../minigl.js'
 
 type Matrix3 = [number, number, number, number, number, number, number, number, number]

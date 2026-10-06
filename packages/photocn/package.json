@@ -5,19 +5,56 @@
   "license": "MIT",
   "type": "module",
   "sideEffects": false,
-  "keywords": ["image-editor", "photo-editor", "webgl", "react", "shadcn", "lut", "exif"],
-  "files": ["dist", "README.md"],
+  "keywords": [
+    "image-editor",
+    "photo-editor",
+    "webgl",
+    "react",
+    "shadcn",
+    "lut",
+    "exif"
+  ],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md"
+  ],
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
-    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
-    "./react": { "types": "./dist/react/index.d.ts", "default": "./dist/react/index.js" },
-    "./hooks": { "types": "./dist/hooks/index.d.ts", "default": "./dist/hooks/index.js" },
-    "./filters": { "types": "./dist/filters/index.d.ts", "default": "./dist/filters/index.js" },
-    "./dom": { "types": "./dist/dom/index.d.ts", "default": "./dist/dom/index.js" },
-    "./gl": { "types": "./dist/gl/index.d.ts", "default": "./dist/gl/index.js" },
-    "./exif": { "types": "./dist/exif/index.d.ts", "default": "./dist/exif/index.js" },
-    "./worker": { "types": "./dist/worker/index.d.ts", "default": "./dist/worker/index.js" },
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "default": "./dist/react/index.js"
+    },
+    "./hooks": {
+      "types": "./dist/hooks/index.d.ts",
+      "default": "./dist/hooks/index.js"
+    },
+    "./filters": {
+      "types": "./dist/filters/index.d.ts",
+      "default": "./dist/filters/index.js"
+    },
+    "./dom": {
+      "types": "./dist/dom/index.d.ts",
+      "default": "./dist/dom/index.js"
+    },
+    "./gl": {
+      "types": "./dist/gl/index.d.ts",
+      "default": "./dist/gl/index.js"
+    },
+    "./exif": {
+      "types": "./dist/exif/index.d.ts",
+      "default": "./dist/exif/index.js"
+    },
+    "./worker": {
+      "types": "./dist/worker/index.d.ts",
+      "default": "./dist/worker/index.js"
+    },
     "./worker/entry": "./dist/editor.worker.js",
     "./package.json": "./package.json"
   },
@@ -35,7 +72,9 @@
     "react": ">=18"
   },
   "peerDependenciesMeta": {
-    "react": { "optional": true }
+    "react": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@testing-library/react": "^16.3.2",
@@ -49,5 +88,15 @@
     "typescript": "^5.9.3",
     "vite": "^7.1.0",
     "vitest": "^4.1.2"
+  },
+  "author": "rbbydotdev",
+  "homepage": "https://photocn.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rbbydotdev/photocn.git",
+    "directory": "packages/photocn"
+  },
+  "bugs": {
+    "url": "https://github.com/rbbydotdev/photocn/issues"
   }
 }

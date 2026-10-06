@@ -1,4 +1,6 @@
 // @ts-nocheck — soft-fork upstream, was strict:false in xphoto
+// Derived from mini-photo-editor (https://github.com/xdadda/mini-photo-editor),
+// MIT © 2025 xdadda. See THIRD_PARTY_NOTICES.md.
 /* 
 *  HEAVILY MODIFIED VERSION of glfx.js by Evan Wallace 
 *  https://evanw.github.io/glfx.js/

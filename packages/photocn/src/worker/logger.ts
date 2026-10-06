@@ -1,7 +1,6 @@
 /**
- * Tiny dev-only namespaced logger, intentionally a structural subset of the
- * app's `@/lib/logger`. Lives inside `@localwin/photo-edit` because the
- * worker entry can't reach back into `@localwin/app` (would invert the
+ * Tiny dev-only namespaced logger. Lives inside the package because the
+ * worker entry can't reach back into an app (that would invert the
  * dependency graph). The bridge ships the active pattern to the worker via
  * postMessage so a single `enableLoggers("bridge:*")` from devtools lights
  * up both sides.
