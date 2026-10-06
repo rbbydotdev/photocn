@@ -121,7 +121,12 @@ function ImageEditorView({
   const width = useElementWidth(editor.rootRef);
   const isMobile = useMediaQuery(MOBILE_QUERY);
   const compact =
-    layout === "compact" || (layout === "auto" && (width > 0 ? width < COMPACT_WIDTH : isMobile));
+    layout === "compact" || (layout === "auto" && (width ? width < COMPACT_WIDTH : isMobile));
+  // Don't mount a layout (and its canvas) until the editor has been measured:
+  // a narrow editor on a wide screen would otherwise start in the desktop
+  // layout and rebuild everything a frame later. A hidden editor (width 0)
+  // falls back to the screen size.
+  const ready = layout !== "auto" || width !== null;
   return (
     <ImageEditorProvider editor={editor}>
       <TooltipProvider>
@@ -131,7 +136,7 @@ function ImageEditorView({
           data-slot="image-editor"
           ref={editor.rootRef}
         >
-          {compact ? (
+          {!ready ? null : compact ? (
             <ImageEditorCompactLayout
               onSave={onSave}
               panels={panels}

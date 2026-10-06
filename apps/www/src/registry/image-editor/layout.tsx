@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode, type RefObject } from "react";
+import { type ReactNode, type RefObject, useEffect, useLayoutEffect, useState } from "react";
 
 import {
   ResizableHandle,
@@ -124,17 +124,24 @@ export function ImageEditorLayout({
 }
 
 /** Width of an element, tracked with a ResizeObserver (0 until measured). */
-export function useElementWidth(ref: RefObject<HTMLElement | null>): number {
-  const [width, setWidth] = useState(0);
-  useEffect(() => {
+/**
+ * The element's width, measured before the first paint (`null` until then),
+ * so a layout can be chosen without rendering the wrong one first.
+ */
+export function useElementWidth(ref: RefObject<HTMLElement | null>): number | null {
+  const [width, setWidth] = useState<number | null>(null);
+  useIsomorphicLayoutEffect(() => {
     const element = ref.current;
     if (!element) return;
+    setWidth(element.getBoundingClientRect().width);
     const observer = new ResizeObserver(([entry]) => setWidth(entry.contentRect.width));
     observer.observe(element);
     return () => observer.disconnect();
   }, [ref]);
   return width;
 }
+
+const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
 /** `window.matchMedia(query).matches`, kept in sync (false during SSR). */
 export function useMediaQuery(query: string): boolean {

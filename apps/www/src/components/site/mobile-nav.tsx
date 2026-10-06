@@ -25,6 +25,7 @@ export function MobileNav({ className, docsNav }: { className?: string; docsNav:
       href={href}
       key={href}
       onClick={() => setOpen(false)}
+      prefetch={href.endsWith(".txt") ? false : undefined}
     >
       {title}
     </Link>

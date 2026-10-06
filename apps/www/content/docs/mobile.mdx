@@ -1,0 +1,58 @@
+---
+title: "Mobile"
+description: "How the editor adapts to phones, and how to control it."
+section: "Guides"
+order: 10.5
+---
+The editor works on phones without extra setup. Below is the full `<ImageEditor />` in a 390px frame (iPhone width). Switch the preview to **Desktop** to compare.
+
+<ComponentPreview name="full-editor" view="phone" />
+
+## How the layout is chosen
+
+The editor looks at **its own width**, not the device. When it's narrower than 640px, it switches to the phone layout. So it also adapts in a sidebar, a dialog or a split view on a laptop, and a wide editor on a tablet keeps the desktop layout.
+
+Until the editor has been measured (the first frame), it uses the screen size instead: phone layout below 768px.
+
+Every live preview in these docs has a **Desktop / Phone** switch, so you can see any example both ways.
+
+## Choosing the layout yourself
+
+Set `layout` to opt out of the automatic switch:
+
+| `layout` | Behavior |
+|---|---|
+| `"auto"` | Default. Phone layout when the editor is narrower than 640px. |
+| `"desktop"` | Always the toolbar and sidebar, even on a phone. |
+| `"compact"` | Always the phone layout, even on a large screen. |
+
+```tsx
+// A small inline editor that should always use the phone layout:
+<ImageEditor layout="compact" className="h-[640px] w-[360px]" src={photo} />
+```
+
+## What changes on a phone
+
+- **The photo comes first.** It fills the screen, and the tools move to a bar at the bottom with 44px touch targets.
+- **Panels open in a sheet.** It opens part-way so the photo stays visible and touchable, and you can drag it up to see the whole panel. Drag it down or tap the active tool again to close it.
+- **Crop for fingers.** Bigger handles, pinch inside the frame to zoom, and drag inside it to reposition.
+- **Export opens as a bottom drawer**, and Open, recipes and Reset go in the **⋯** menu.
+- **Safe areas.** The header and tool bar stay clear of the notch and the home indicator.
+
+## Tips
+
+Give the editor the full screen height, and let the page extend under the notch so the safe-area padding applies:
+
+```tsx
+// app/layout.tsx
+export const viewport = { viewportFit: "cover" };
+
+// app/edit/page.tsx
+<ImageEditor className="h-dvh" src={photo} />
+```
+
+Want a phone-first editor you can change? Add the [editor-mobile](/blocks#editor-mobile) block, or build your own from the [Compact Layout](/docs/compact-layout) pieces.
+
+```bash
+npx shadcn@latest add @photocn/editor-mobile
+```

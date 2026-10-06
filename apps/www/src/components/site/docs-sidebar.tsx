@@ -15,7 +15,8 @@ export function DocsSidebar({ nav: docsNav }: { nav: typeof DocsNav }) {
           <h4 className="px-2 pb-1 text-xs font-medium text-muted-foreground">{section.title}</h4>
           {section.items.map((item) => (
             <Link
-              {...(item.external ? { target: "_blank" } : {})}
+              // Not a page (e.g. /llms.txt): no RSC prefetch, open in a new tab.
+              {...(item.external ? { target: "_blank", prefetch: false } : {})}
               className={cn(
                 "rounded-md px-2 py-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
                 pathname === item.href && "bg-muted font-medium text-foreground",
