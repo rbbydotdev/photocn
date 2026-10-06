@@ -1,6 +1,7 @@
 // End-to-end install test: what a user does, in a brand-new app.
 //
 //   pnpm --filter www test:install
+//   pnpm --filter www test:install --live   (photocn.dev + photocn from npm)
 //
 // 1. Packs the photocn engine and builds the registry against a local server.
 // 2. Creates a fresh Next.js app, runs `shadcn init -b radix`, registers
@@ -17,8 +18,15 @@ const www = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const repo = path.join(www, "../..");
 const PORT = 8799;
 const APP_PORT = 3999;
-const REGISTRY = `http://localhost:${PORT}`;
+const live = process.argv.includes("--live");
+const REGISTRY = live ? "https://photocn.dev" : `http://localhost:${PORT}`;
 const keep = process.argv.includes("--keep");
+// A fresh release can be younger than a minimum-release-age policy.
+if (live) {
+  process.env.npm_config_minimum_release_age = "0";
+  process.env.pnpm_config_minimum_release_age = "0";
+  process.env.npm_config_min_release_age = "0";
+}
 
 const run = (cmd, cwd, env = {}) => {
   console.log(`\n$ ${cmd}  (${path.relative(repo, cwd) || "."})`);
@@ -34,14 +42,18 @@ const stop = () => servers.forEach((server) => server.kill("SIGTERM"));
 process.on("exit", stop);
 
 try {
-  // 1. Engine tarball + registry pointing at the local server.
-  run("pnpm --filter photocn build", repo);
-  run(`pnpm pack --pack-destination ${work}`, path.join(repo, "packages/photocn"));
-  const { version } = JSON.parse(readFileSync(path.join(repo, "packages/photocn/package.json"), "utf8"));
-  const tarball = path.join(work, `photocn-${version}.tgz`);
-  run("pnpm build", www, { NEXT_PUBLIC_SITE_URL: REGISTRY, PHOTOCN_SPEC: `photocn@file:${tarball}` });
-  const registry = spawn("pnpm", ["exec", "wrangler", "dev", "--port", String(PORT), "--local"], { cwd: www, stdio: "ignore" });
-  servers.push(registry);
+  // 1. Engine tarball + registry pointing at the local server (or, with
+  //    --live, the deployed registry and the published package).
+  let tarball = null;
+  if (!live) {
+    run("pnpm --filter photocn build", repo);
+    run(`pnpm pack --pack-destination ${work}`, path.join(repo, "packages/photocn"));
+    const { version } = JSON.parse(readFileSync(path.join(repo, "packages/photocn/package.json"), "utf8"));
+    tarball = path.join(work, `photocn-${version}.tgz`);
+    run("pnpm build", www, { NEXT_PUBLIC_SITE_URL: REGISTRY, PHOTOCN_SPEC: `photocn@file:${tarball}` });
+    const registry = spawn("pnpm", ["exec", "wrangler", "dev", "--port", String(PORT), "--local"], { cwd: www, stdio: "ignore" });
+    servers.push(registry);
+  }
   await waitFor(`${REGISTRY}/r/registry.json`);
 
   // 2. A fresh app, set up the way the docs say.
@@ -52,8 +64,9 @@ try {
   const app = path.join(work, "app");
   rmSync(path.join(app, "pnpm-workspace.yaml"), { force: true });
   const pkg = JSON.parse(readFileSync(path.join(app, "package.json"), "utf8"));
-  // Until photocn is on npm, any reinstall must resolve it to the tarball.
-  pkg.pnpm = { overrides: { photocn: `file:${tarball}` }, onlyBuiltDependencies: ["sharp", "unrs-resolver", "@tailwindcss/oxide"] };
+  pkg.pnpm = { onlyBuiltDependencies: ["sharp", "unrs-resolver", "@tailwindcss/oxide"] };
+  // Testing an unpublished build: any reinstall must resolve to the tarball.
+  if (tarball) pkg.pnpm.overrides = { photocn: `file:${tarball}` };
   writeFileSync(path.join(app, "package.json"), JSON.stringify(pkg, null, 2));
   run("pnpm install", app);
   run("pnpm dlx shadcn@latest init -b radix -p nova -y --no-monorepo", app);
@@ -94,7 +107,7 @@ try {
   stop();
   if (!keep) rmSync(work, { recursive: true, force: true });
   // The registry files are committed; put back the production (photocn.dev) build.
-  run("node scripts/build-registry.mjs", www, { REGISTRY_URL: "", PHOTOCN_SPEC: "" });
+  if (!live) run("node scripts/build-registry.mjs", www, { REGISTRY_URL: "", PHOTOCN_SPEC: "" });
 }
 
 async function waitFor(url, timeout = 120_000) {

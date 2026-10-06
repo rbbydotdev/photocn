@@ -1,0 +1,39 @@
+name: Release
+
+# Publishes photocn to npm with trusted publishing (OIDC): no tokens, no 2FA
+# prompts, and a provenance attestation on every version.
+#
+#   1. Bump packages/photocn/package.json "version" and commit.
+#   2. git tag v0.2.0 && git push origin v0.2.0
+#
+# One-time setup (already done for photocn):
+#   npm trust github photocn --file release.yml --repo rbbydotdev/photocn --allow-publish
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          # Trusted publishing needs npm 11.5+, which ships with Node 24.
+          node-version: 24
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+      - run: pnpm install --frozen-lockfile
+      - name: Tag matches the package version
+        run: test "v$(node -p 'require("./packages/photocn/package.json").version')" = "$GITHUB_REF_NAME"
+      - run: pnpm --filter photocn build
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: npm publish --access public
+        working-directory: packages/photocn
