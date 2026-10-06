@@ -17,11 +17,12 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter photocn build
-      - run: pnpm typecheck
       - run: pnpm test
+      # The site build generates content-collections, which typecheck needs.
       - run: pnpm --filter www build
         env:
           NEXT_PUBLIC_SITE_URL: https://photocn.dev
+      - run: pnpm typecheck
 
   e2e:
     runs-on: ubuntu-latest
