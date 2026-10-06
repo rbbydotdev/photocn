@@ -133,11 +133,7 @@ pnpm run deploy      # build and deploy photocn.dev (Cloudflare)
 
 ## Contributing
 
-1. Fork the repository.
-2. Create a branch: `git checkout -b my-change`.
-3. Make your change, with tests (`pnpm test`, `pnpm --filter www test:e2e`).
-4. Commit and push.
-5. Open a pull request.
+Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup and checks.
 
 ## License
 

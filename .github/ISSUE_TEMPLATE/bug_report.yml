@@ -1,0 +1,33 @@
+name: Bug report
+description: Something doesn't work as documented.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead. Screenshots help.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: How to reproduce
+      description: Steps, or a link to a minimal repo / StackBlitz.
+      placeholder: |
+        1. npx shadcn@latest add @photocn/editor
+        2. ...
+    validations:
+      required: true
+  - type: input
+    id: where
+    attributes:
+      label: Component or block
+      placeholder: "@photocn/editor, createPhoto(), useImageEditorState…"
+  - type: input
+    id: env
+    attributes:
+      label: Browser, OS and photocn version
+      placeholder: Safari 18 on iOS 18, photocn 0.1.1
+    validations:
+      required: true
