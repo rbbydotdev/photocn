@@ -23,7 +23,7 @@ export function BlockPreview({
 }) {
   const [tab, setTab] = useState<"preview" | "code">("preview");
   const [copied, setCopied] = useState(false);
-  const command = `npx shadcn@latest add @photocn/${name}`;
+  const command = `pnpm dlx shadcn@latest add @photocn/${name}`;
   return (
     <section className="flex scroll-mt-20 flex-col gap-3" id={name}>
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -54,7 +54,8 @@ export function BlockPreview({
             ))}
           </div>
           <Button
-            className="hidden font-mono text-xs md:inline-flex"
+            aria-label={`Copy: ${command}`}
+            className="font-mono text-xs"
             onClick={async () => {
               await navigator.clipboard.writeText(command);
               setCopied(true);
@@ -64,9 +65,10 @@ export function BlockPreview({
             variant="outline"
           >
             {copied ? <CheckIcon data-icon="inline-start" /> : <TerminalIcon data-icon="inline-start" />}
-            npx shadcn add @photocn/{name}
+            <span className="hidden md:inline">{command}</span>
+            <span className="md:hidden">{copied ? "Copied" : "Copy"}</span>
           </Button>
-          <Button asChild className="hidden md:inline-flex" size="icon-sm" variant="ghost">
+          <Button asChild size="icon-sm" variant="ghost">
             <a aria-label="Open in a new tab" href={`/view/${name}`} rel="noreferrer" target="_blank">
               <MaximizeIcon />
             </a>

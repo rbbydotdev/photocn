@@ -21,6 +21,20 @@ export default async function BlocksPage() {
         <p className="max-w-2xl text-muted-foreground">
           Ready-made photo editors. Preview them, then add one to your app with a single command.
         </p>
+        <div className="mt-2 flex max-w-2xl flex-col gap-2 rounded-lg border bg-muted/30 p-4 text-sm">
+          <p>
+            Until <code className="font-mono">@photocn</code> is listed in the shadcn registry directory, add it to your{" "}
+            <code className="font-mono">components.json</code> once:
+          </p>
+          <pre className="overflow-x-auto rounded-md bg-background p-3 font-mono text-xs">{`{
+  "registries": {
+    "@photocn": "https://photocn.dev/r/{name}.json"
+  }
+}`}</pre>
+          <p className="text-muted-foreground">
+            Or run <code className="font-mono">pnpm dlx shadcn@latest registry add @photocn=https://photocn.dev/r/{"{name}"}.json</code>.
+          </p>
+        </div>
       </header>
       {blocks.map((block, index) => (
         <BlockPreview
