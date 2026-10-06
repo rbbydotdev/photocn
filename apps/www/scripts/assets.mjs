@@ -167,7 +167,7 @@ async function waitForPaint(page, hold = 700) {
 
 const editor = (page) => page.locator("[data-slot=image-editor]").first();
 const slider = (page, label) =>
-  editor(page).locator("[data-slot=adjustment-slider]").filter({ hasText: label }).locator("[role=slider]");
+  editor(page).locator("[data-slot=adjustment-slider]").filter({ hasText: label }).locator("[data-slot=slider-thumb]");
 
 try {
   // Stills.
@@ -237,7 +237,7 @@ try {
         await caption(page, `Filter: ${look}`);
         await waitForPaint(page, 900);
       }
-      const strength = page.locator("[data-slot=slider] [role=slider]").first();
+      const strength = page.locator("[data-slot=slider] [data-slot=slider-thumb]").first();
       await caption(page, "Strength 0%");
       await slideTo(page, strength, 0, 24);
       await caption(page, "Strength 100%");
@@ -248,7 +248,7 @@ try {
   await clip("crop", "/view/editor", async (page) => {
     await editor(page).locator("[data-slot=editor-toolbar]").getByRole("button", { name: "Crop" }).click();
     await page.waitForTimeout(700);
-    const straighten = editor(page).locator("[data-slot=crop-panel] [role=slider]").first();
+    const straighten = editor(page).locator("[data-slot=crop-panel] [data-slot=slider-thumb]").first();
     await caption(page, "Straighten +25°");
     await slideTo(page, straighten, 0.778, 20);
     await caption(page, "Straighten −25°");
