@@ -30,7 +30,7 @@ import { cn } from "@/lib/utils";
 
 import { ImageEditorCanvas } from "./canvas";
 import { ImageEditorExportDialog } from "./export-dialog";
-import { useMediaQuery, MOBILE_QUERY } from "./layout";
+import { useElementHeight } from "./layout";
 import { ImageEditorToolPanel } from "./tool-panel";
 import {
   ImageEditorCompareButton,
@@ -47,8 +47,9 @@ export interface ImageEditorCompactLayoutProps {
   toolbarExtra?: ReactNode;
   onSave?: Parameters<typeof ImageEditorExportDialog>[0]["onSave"];
   /**
-   * Where the active tool's panel goes: a bottom drawer (phones) or inline
-   * under the canvas (a narrow editor on a big screen). Default: by viewport.
+   * Where the active tool's panel goes: `"drawer"` (default), a sheet that
+   * slides up inside the editor with two snap points, or `"inline"`, a
+   * panel between the photo and the tool bar.
    */
   panelMode?: "drawer" | "inline";
   className?: string;
@@ -72,8 +73,11 @@ export function ImageEditorCompactLayout({
   className,
 }: ImageEditorCompactLayoutProps) {
   const editor = useImageEditor();
-  const isMobile = useMediaQuery(MOBILE_QUERY);
-  const mode = panelMode ?? (isMobile ? "drawer" : "inline");
+  const mode = panelMode ?? "drawer";
+  // The drawer is sized against the editor, not the window, so it works the
+  // same full screen on a phone and in a narrow container on desktop.
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const rootHeight = useElementHeight(rootRef);
   const [panelOpen, setPanelOpen] = useState(false);
   const [snap, setSnap] = useState<number>(SNAP_POINTS[0]);
   const activeTool = tools.find((tool) => tool.value === editor.tool);
@@ -92,13 +96,14 @@ export function ImageEditorCompactLayout({
   // The canvas sits above the bottom tool bar (~3.25rem), so this leaves
   // ~1.5rem between the photo and the sheet: room for the 44px crop handles.
   const drawerInset =
-    mode === "drawer" && panelOpen ? `calc(${SNAP_POINTS[0] * 100}dvh - 1.75rem)` : undefined;
+    mode === "drawer" && panelOpen && rootHeight ? Math.max(0, rootHeight * SNAP_POINTS[0] - 28) : undefined;
 
   return (
     <div
-      className={cn("flex h-full min-h-0 flex-col bg-background", className)}
+      className={cn("relative flex h-full min-h-0 flex-col overflow-hidden bg-background", className)}
       data-panel-mode={mode}
       data-slot="image-editor-compact"
+      ref={rootRef}
     >
       <header className="flex h-12 shrink-0 items-center gap-1 border-b px-2 pt-[env(safe-area-inset-top)]">
         <ImageEditorUndoButton className="size-11" />
@@ -302,7 +307,9 @@ function PanelSheet({
   const onPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
     const d = drag.current;
     if (!d || d.pointerId !== event.pointerId) return;
-    const next = d.startSnap - (event.clientY - d.startY) / window.innerHeight;
+    const container = event.currentTarget.closest("[data-slot=image-editor-compact]");
+    const containerHeight = container?.clientHeight || window.innerHeight;
+    const next = d.startSnap - (event.clientY - d.startY) / containerHeight;
     setDragSnap(Math.min(0.96, Math.max(0.08, next)));
   };
   const onPointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -326,14 +333,14 @@ function PanelSheet({
       aria-hidden={!open}
       aria-label={`${label} controls`}
       className={cn(
-        "fixed inset-x-0 bottom-0 z-40 flex flex-col rounded-t-xl border-t bg-popover text-sm text-popover-foreground shadow-lg",
+        "absolute inset-x-0 bottom-0 z-40 flex flex-col rounded-t-xl border-t bg-popover text-sm text-popover-foreground shadow-lg",
         dragSnap === null && "transition-[height,transform] duration-300 ease-out",
         !open && "pointer-events-none translate-y-full",
       )}
       data-open={open || undefined}
       data-slot="image-editor-drawer"
       inert={!open}
-      style={{ height: `${height * 100}dvh` }}
+      style={{ height: `${height * 100}%` }}
     >
       <div
         aria-label="Resize panel"

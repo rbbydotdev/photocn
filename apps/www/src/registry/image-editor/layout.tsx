@@ -143,6 +143,20 @@ export function useElementWidth(ref: RefObject<HTMLElement | null>): number | nu
 
 const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
+/** The element's height, kept in sync (`null` until measured). */
+export function useElementHeight(ref: RefObject<HTMLElement | null>): number | null {
+  const [height, setHeight] = useState<number | null>(null);
+  useIsomorphicLayoutEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    setHeight(element.getBoundingClientRect().height);
+    const observer = new ResizeObserver(([entry]) => setHeight(entry.contentRect.height));
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [ref]);
+  return height;
+}
+
 /** `window.matchMedia(query).matches`, kept in sync (false during SSR). */
 export function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = useState(false);

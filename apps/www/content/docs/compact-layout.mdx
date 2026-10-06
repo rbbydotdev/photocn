@@ -26,5 +26,5 @@ The full editor switches to this layout on its own when it's narrower than 640px
 | --- | --- | --- |
 | `tools` | `EditorToolbarTool[]` | The tools in the bottom bar. |
 | `panels` | `Record<toolId, ReactNode>` | Replace or add panels. |
-| `panelMode` | `"drawer" \| "inline"` | Where panels open. Default: a sheet on phones, below the photo on wider screens. |
+| `panelMode` | `"drawer" \| "inline"` | Where panels open. Default `"drawer"`: a sheet that slides up inside the editor (drag between two heights, or down to close). `"inline"` puts the panel between the photo and the tool bar. |
 | `onSave` | `(result) => Promise<void>` | Adds a Save button to the export panel. |
