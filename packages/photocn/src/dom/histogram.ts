@@ -90,7 +90,7 @@ export function calculateRgbHistogram(
   options: CalculateRgbHistogramOptions = {},
   target: RgbHistogram = createRgbHistogram(),
 ): RgbHistogram {
-  const pixels = source instanceof ImageData ? source.data : source;
+  const pixels = "data" in source ? source.data : source;
   const minValue = options.minValue ?? DEFAULT_MIN_VALUE;
   const maxValue = options.maxValue ?? DEFAULT_MAX_VALUE;
   const alphaThreshold = options.alphaThreshold;

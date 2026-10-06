@@ -44,6 +44,12 @@ import {
 import { applyRecipe, buildRecipe, type RecipeV1 } from "../recipes";
 import { normalizeEditorParams } from "../legacy";
 import {
+  exportFilename,
+  exportFormatInfo,
+  resolveOutputSize,
+  type ImageExportFormat,
+} from "../output";
+import {
   filterPresets as defaultFilterPresets,
   findFilterPreset,
   type FilterPreset,
@@ -89,7 +95,7 @@ import { useImageEditorKeybindings } from "./use-image-editor-keybindings";
 
 export type ImageEditorSource = BrowserImageInput;
 
-export type ImageEditorExportFormat = "png" | "jpeg" | "webp";
+export type ImageEditorExportFormat = ImageExportFormat;
 
 export interface ImageEditorExportOptions {
   /** Default `"png"`. */
@@ -368,38 +374,13 @@ export interface ImageEditorApi {
 }
 
 const FULL_RECT: NormalizedRect = { x: 0, y: 0, width: 1, height: 1 };
-const MAX_OUTPUT = 16384;
-
-const exportFormatInfo: Record<
-  ImageEditorExportFormat,
-  { mime: string; extension: string; quality?: number }
-> = {
-  png: { mime: "image/png", extension: "png" },
-  jpeg: { mime: "image/jpeg", extension: "jpg", quality: 0.92 },
-  webp: { mime: "image/webp", extension: "webp", quality: 0.9 },
-};
-
 const rectsEqual = (a: NormalizedRect, b: NormalizedRect) =>
   Math.abs(a.x - b.x) < 1e-9 &&
   Math.abs(a.y - b.y) < 1e-9 &&
   Math.abs(a.width - b.width) < 1e-9 &&
   Math.abs(a.height - b.height) < 1e-9;
 
-/** Resolve export resize options against the crop's size. */
-export function resolveOutputSize(
-  crop: Size,
-  target: { width?: number; height?: number },
-): Size {
-  const ratio = crop.width / crop.height;
-  let { width, height } = target;
-  if (width && !height) height = width / ratio;
-  if (height && !width) width = height * ratio;
-  if (!width || !height) return crop;
-  return {
-    width: Math.max(1, Math.min(MAX_OUTPUT, Math.round(width))),
-    height: Math.max(1, Math.min(MAX_OUTPUT, Math.round(height))),
-  };
-}
+export { resolveOutputSize };
 
 /**
  * The headless image editor. Owns params + history, the renderer, and every
@@ -864,13 +845,12 @@ export function useImageEditorState(
           type,
         });
       }
-      const base = (filename ?? "edited-image").replace(/\.[^/.]+$/, "");
       const result: ImageEditorExportResult = {
         blob,
         type,
         width,
         height,
-        filename: `${base}.${info.extension}`,
+        filename: exportFilename(filename, format),
       };
       onExport?.(result);
       return result;

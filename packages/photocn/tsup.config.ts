@@ -45,6 +45,7 @@ export default defineConfig({
     "gl/index": "src/gl/index.ts",
     "exif/index": "src/exif/index.ts",
     "worker/index": "src/worker/index.ts",
+    "photo/index": "src/photo/index.ts",
     "editor.worker": "src/worker/editor.worker.ts",
   },
   format: ["esm"],

@@ -27,6 +27,7 @@ export const examples: Record<string, ComponentType> = {
   "metadata-demo": dynamic(() => import("./metadata-demo"), { ssr: false }),
   "recipes-demo": dynamic(() => import("./recipes-demo"), { ssr: false }),
   "toolbar-demo": dynamic(() => import("./toolbar-demo"), { ssr: false }),
+  "vanilla": dynamic(() => import("./vanilla"), { ssr: false }),
 };
 
 export type ExampleName = keyof typeof examples;

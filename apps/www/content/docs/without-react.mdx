@@ -1,0 +1,79 @@
+---
+title: "Without React"
+description: "Edit and export photos from plain JavaScript with createPhoto()."
+section: "Guides"
+order: 12.5
+---
+`createPhoto()` from `photocn/photo` loads an image and returns a `Photo`: a stateful object you edit with method calls. It doesn't depend on React, so you can use it in Vue, Svelte, web components, plain scripts, or a React app that only needs to process images.
+
+<ComponentPreview name="vanilla" />
+
+## Edit and export
+
+Every edit returns the photo, so calls chain. Nothing is baked in until you export.
+
+```ts
+import { createPhoto } from "photocn/photo";
+
+const photo = await createPhoto(file); // File, Blob, URL, ArrayBuffer or <img>
+
+photo
+  .adjust({ exposure: 0.3, contrast: 0.2, saturation: -1 })
+  .filter("juno", 0.8)
+  .straighten(4)
+  .aspectRatio("1:1");
+
+const { blob, width, height, filename } = await photo.export({ format: "jpeg", width: 1080 });
+photo.dispose();
+```
+
+To process many photos the same way, export one edit as a recipe and apply it to the others:
+
+```ts
+const look = photo.recipe;
+for (const file of files) {
+  const next = await createPhoto(file);
+  await next.applyRecipe(look!);
+  upload(await next.export({ format: "webp" }));
+  next.dispose();
+}
+```
+
+## Live preview
+
+`attach(canvas)` renders every change into a `<canvas>`, in a Web Worker when the browser supports it. `subscribe()` tells you when to update your own controls.
+
+```ts
+const detach = photo.attach(document.querySelector("canvas")!);
+const unsubscribe = photo.subscribe((photo) => {
+  exposureInput.value = String(photo.params.lights.exposure);
+});
+```
+
+A canvas handed to the worker can't be reused, so give each `attach()` a fresh `<canvas>`.
+
+## API
+
+| Member | Description |
+|---|---|
+| `adjust(values)` | Light, color and effect sliders, each `-1..1`: `brightness`, `exposure`, `gamma`, `contrast`, `shadows`, `highlights`, `bloom`, `temperature`, `tint`, `vibrance`, `saturation`, `sepia`, `clarity`, `noise`, `vignette`. |
+| `filter(name, strength?)` | Apply a look (`"juno"`, `"moon"`…) at `0..1` strength; `null` removes it. |
+| `filterStrength(strength)` | Change the strength of the current look. |
+| `curves(channels)` | Tone curves `[rgb, r, g, b]`, each a list of `[input, output]` points or `null`. |
+| `blur({ bokeh, gaussian, focus, centerX, centerY })` | Lens or gaussian blur around a sharp center. |
+| `rotate(1 \| -1)`, `flip(axis)` | Quarter turns and mirroring. |
+| `straighten(degrees)` | `±45°`. The crop shrinks to stay inside the photo. |
+| `perspective({ x, y })` | Keystone correction, `-1..1`. |
+| `crop(rect)`, `aspectRatio(ratio)` | Normalized crop rect, or a ratio (`16 / 9`, `"4:3"`, `"original"`, `null`). |
+| `undo()`, `redo()`, `reset()` | One step per call. |
+| `params`, `setParams(params)` | The full edit as plain data (save it, restore it later). |
+| `recipe`, `applyRecipe(recipe)` | A portable copy of the edit. |
+| `export(options)` | `{ format, quality, width, height, preserveExif }` → `{ blob, type, width, height, filename }`. |
+| `histogram()` | RGB histogram of the result. |
+| `attach(canvas)`, `detach()` | Live preview. |
+| `subscribe(listener)` | Called after every change; returns an unsubscribe function. |
+| `ready()` | Resolves once pending filters have loaded. `export()` waits for it. |
+| `size`, `outputSize`, `metadata`, `name` | Source size, size after crop, EXIF, filename. |
+| `dispose()` | Free the renderer and worker. |
+
+In React, use [`useImageEditorState`](/docs/headless) instead: it adds tools, transient slider edits, crop interactions and everything the components need.

@@ -39,7 +39,7 @@ export default function Page() {
 }
 \`\`\`
 
-The editor is a client component. Files install into components/image-editor/; the engine is the \`photocn\` npm package (\`photocn/react\` for the hooks).
+The editor is a client component. Files install into components/image-editor/; the engine is the \`photocn\` npm package (\`photocn/react\` for the hooks, \`photocn/photo\` for \`createPhoto()\` without React).
 
 ## Docs
 

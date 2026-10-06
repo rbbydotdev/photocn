@@ -31,6 +31,10 @@
       "types": "./dist/react/index.d.ts",
       "default": "./dist/react/index.js"
     },
+    "./photo": {
+      "types": "./dist/photo/index.d.ts",
+      "default": "./dist/photo/index.js"
+    },
     "./hooks": {
       "types": "./dist/hooks/index.d.ts",
       "default": "./dist/hooks/index.js"

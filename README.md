@@ -31,7 +31,7 @@
 - ✂️ **Crop & transform**: straighten, perspective, rotate and flip, all reversible
 - 🌫️ **Lens blur and blending**
 - 📱 **Works on phones**: bottom tool bar, panels in a sheet, pinch to zoom
-- 🧩 **Composable**: the full editor, any piece on its own, or a headless hook
+- 🧩 **Composable**: the full editor, any piece on its own, a headless hook, or `createPhoto()` without React
 - ⚡ **Fast**: rendering runs in a Web Worker, so sliders stay smooth on large photos
 - 💾 **Export**: PNG, JPEG (keeps EXIF) or WebP, at any size
 - 🤖 **Agent-friendly**: [llms.txt](https://photocn.dev/llms.txt) and a markdown copy of every docs page
@@ -85,6 +85,16 @@ editor.filters.select("juno");
 await editor.exportImage({ format: "webp", width: 1600 });
 ```
 
+Or skip React entirely: `createPhoto()` gives you a stateful photo to edit and export.
+
+```ts
+import { createPhoto } from "photocn/photo";
+
+const photo = await createPhoto(file);
+photo.adjust({ exposure: 0.3, saturation: -1 }).filter("juno").aspectRatio("1:1");
+const { blob } = await photo.export({ format: "jpeg", width: 1080 });
+```
+
 ## Blocks
 
 Ready-made editors you add with one command: [editor](https://photocn.dev/blocks#editor), [editor-minimal](https://photocn.dev/blocks#editor-minimal), [editor-mobile](https://photocn.dev/blocks#editor-mobile), [avatar-cropper](https://photocn.dev/blocks#avatar-cropper), [upload-editor](https://photocn.dev/blocks#upload-editor), [filter-picker](https://photocn.dev/blocks#filter-picker), [before-after](https://photocn.dev/blocks#before-after) and [batch-looks](https://photocn.dev/blocks#batch-looks).
@@ -117,7 +127,7 @@ pnpm --filter www assets         # refresh screenshots, GIFs, banner and OG imag
 pnpm run deploy      # build and deploy photocn.dev (Cloudflare)
 ```
 
-- `packages/photocn` is the npm package: the engine plus `photocn/react`.
+- `packages/photocn` is the npm package: the engine, `photocn/react` and `photocn/photo`.
 - `apps/www` is the docs site and shadcn registry at photocn.dev. Registry source is in `apps/www/src/registry/`.
 - Design notes: [docs/compose.md](docs/compose.md) explains how crop & transform work.
 
