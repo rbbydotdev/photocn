@@ -62,6 +62,7 @@ export default function ApiPage() {
             ["histogram", "{ data, canvasRef }", "Live RGB histogram."],
             ["exportImage / download", "({ format, quality, width, height }?) => Promise<ExportResult>", "Encode at full resolution, or resize with width/height (ratio kept if you give one side). JPEG keeps EXIF."],
             ["canvasRef / stageRef / rootRef", "RefObject", "Attach to the preview canvas, its container and the editor root."],
+            ["canvasKey", "number", "Use as the preview canvas's key. A canvas handed to the render worker can't be reused, so the editor asks for a fresh one when it needs to (new image, color space change)."],
             ["engine / worker", "UseMiniPhotoEditorResult / WorkerEditor", "Escape hatches to the renderer, EXIF and the worker bridge."],
           ]}
         />

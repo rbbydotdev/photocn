@@ -355,6 +355,11 @@ export interface ImageEditorApi {
   rootRef: RefObject<HTMLDivElement | null>;
   /** Attach to the preview `<canvas>`. */
   canvasRef: RefObject<HTMLCanvasElement | null>;
+  /**
+   * Use as that `<canvas>`'s `key`. A canvas handed to the render worker
+   * can't be reused, so the editor asks for a fresh one when it needs it.
+   */
+  canvasKey: number;
 
   /** Low-level engine (renderer, EXIF, raw hooks) — escape hatch. */
   engine: UseMiniPhotoEditorResult;
@@ -1043,6 +1048,7 @@ export function useImageEditorState(
     stageRef,
     rootRef,
     canvasRef: engine.miniGl.canvasRef,
+    canvasKey: engine.miniGl.canvasKey,
 
     engine,
     worker,

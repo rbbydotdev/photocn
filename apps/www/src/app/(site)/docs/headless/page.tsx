@@ -12,7 +12,8 @@ export default function HeadlessPage() {
       <Section>
         <P>
           <code>useImageEditorState()</code> from <code>photocn/react</code> returns the same API the
-          components use. Attach <code>canvasRef</code> to a <code>{"<canvas>"}</code> and{" "}
+          components use. Attach <code>canvasRef</code> to a <code>{"<canvas>"}</code> (keyed by{" "}
+          <code>canvasKey</code>) and{" "}
           <code>stageRef</code> to its container. Everything else is up to you, and no registry code is
           needed. To share the state with children, pass it to{" "}
           <code>{"<ImageEditorProvider editor={editor}>"}</code>.

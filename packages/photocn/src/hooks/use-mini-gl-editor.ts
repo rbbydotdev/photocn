@@ -61,9 +61,26 @@ export interface UseMiniGlEditorResult<
   status: MiniGlEditorStatus;
   error: unknown;
   isReady: boolean;
+  /**
+   * Use as the `key` of the `<canvas>` you attach `canvasRef` to. It changes
+   * whenever a renderer needs a fresh canvas (new image, color space change,
+   * Strict Mode remounts), because a canvas handed to a worker can't be reused.
+   */
+  canvasKey: number;
 }
 
 export type MiniGlEditorStatus = "idle" | "loading" | "ready" | "error";
+
+/**
+ * Factories that take exclusive ownership of the canvas (e.g. by calling
+ * `transferControlToOffscreen`, which can only happen once per element) set
+ * this flag. The hook then gives every editor instance its own `<canvas>`.
+ */
+export interface ExclusiveCanvasFactory {
+  exclusiveCanvas?: boolean;
+}
+
+const claimedCanvases = new WeakSet<HTMLCanvasElement>();
 
 export function useMiniGlEditor<
   TRenderer = EditorRenderer,
@@ -98,6 +115,8 @@ export function useMiniGlEditor<
   );
   const [status, setStatus] = useState<MiniGlEditorStatus>("idle");
   const [error, setError] = useState<unknown>(null);
+  const [canvasKey, setCanvasKey] = useState(0);
+  const rekeyedFromRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -112,6 +131,30 @@ export function useMiniGlEditor<
       return () => {
         disposed = true;
       };
+    }
+
+    if ((editorFactory as ExclusiveCanvasFactory).exclusiveCanvas) {
+      if (claimedCanvases.has(canvas)) {
+        if (rekeyedFromRef.current === canvas) {
+          // We asked for a fresh canvas and got the same element back.
+          setStatus("error");
+          setError(
+            new Error(
+              "This <canvas> already belongs to a renderer. Render it with key={canvasKey} so a fresh one can be mounted.",
+            ),
+          );
+          return () => {
+            disposed = true;
+          };
+        }
+        rekeyedFromRef.current = canvas;
+        setStatus("loading");
+        setCanvasKey((key) => key + 1);
+        return () => {
+          disposed = true;
+        };
+      }
+      claimedCanvases.add(canvas);
     }
 
     setStatus("loading");
@@ -144,7 +187,7 @@ export function useMiniGlEditor<
       disposed = true;
       activeEditor?.dispose?.();
     };
-  }, [colorspace, editorFactory, image]);
+  }, [colorspace, editorFactory, image, canvasKey]);
 
   return {
     canvasRef,
@@ -153,5 +196,6 @@ export function useMiniGlEditor<
     status,
     error,
     isReady: status === "ready",
+    canvasKey,
   };
 }

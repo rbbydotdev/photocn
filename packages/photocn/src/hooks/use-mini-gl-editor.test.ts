@@ -520,3 +520,68 @@ describe("useMiniGlEditor", () => {
     });
   });
 });
+
+describe("exclusive canvases (worker renderers)", () => {
+  // A factory that, like the worker one, can only take each canvas once.
+  function exclusiveFactory() {
+    const seen = new Set<HTMLCanvasElement>();
+    const factory = vi.fn(async ({ canvas }: { canvas: HTMLCanvasElement }) => {
+      if (seen.has(canvas)) {
+        throw new Error("Cannot transfer control from a canvas for more than one time.");
+      }
+      seen.add(canvas);
+      return createStubEditor();
+    }) as unknown as CreateMiniGlEditor<MiniGlRenderer, StubEditor> & {
+      exclusiveCanvas: boolean;
+    };
+    factory.exclusiveCanvas = true;
+    return factory;
+  }
+
+  type Props = { image: MiniGlEditorImage | null; colorspace: "srgb" | "display-p3" };
+
+  it("asks for a fresh canvas instead of reusing one (new image, color space change)", async () => {
+    const createEditor = exclusiveFactory();
+    // Model <canvas key={canvasKey} ref={canvasRef}>: React mounts a new
+    // element (and sets the ref) whenever the key changes, before effects run.
+    let mountedKey = -1;
+    const { result, rerender } = renderHook(({ image, colorspace }: Props) => {
+      const editor = useMiniGlEditor({ image, colorspace, createEditor });
+      if (editor.canvasKey !== mountedKey) {
+        mountedKey = editor.canvasKey;
+        editor.canvasRef.current = document.createElement("canvas");
+      }
+      return editor;
+    }, { initialProps: { image: null, colorspace: "srgb" } as Props });
+
+    await act(async () => rerender({ image: createStubImage(), colorspace: "srgb" }));
+    await waitFor(() => expect(result.current.status).toBe("ready"));
+    const firstKey = result.current.canvasKey;
+
+    // The renderer must be rebuilt (e.g. EXIF says Display P3): it goes on a new canvas.
+    await act(async () => rerender({ image: createStubImage(), colorspace: "display-p3" }));
+    await waitFor(() => expect(result.current.status).toBe("ready"));
+    expect(result.current.canvasKey).toBe(firstKey + 1);
+    expect(result.current.error).toBeNull();
+    expect(createEditor).toHaveBeenCalledTimes(2);
+    const canvases = vi.mocked(createEditor).mock.calls.map(([options]) => options.canvas);
+    expect(canvases[0]).not.toBe(canvases[1]);
+  });
+
+  it("reports a clear error instead of looping when the canvas is not keyed", async () => {
+    const createEditor = exclusiveFactory();
+    const { result, rerender } = renderHook(
+      ({ image, colorspace }: Props) => useMiniGlEditor({ image, colorspace, createEditor }),
+      { initialProps: { image: null, colorspace: "srgb" } as Props },
+    );
+    attachCanvasFromHook(result as never);
+    await act(async () => rerender({ image: createStubImage(), colorspace: "srgb" }));
+    await waitFor(() => expect(result.current.status).toBe("ready"));
+    await act(async () => rerender({ image: createStubImage(), colorspace: "srgb" }));
+    // No re-keyed canvas arrives: the next pass gives up with guidance.
+    await act(async () => rerender({ image: createStubImage(), colorspace: "srgb" }));
+    expect(result.current.status).toBe("error");
+    expect(String(result.current.error)).toMatch(/key=\{canvasKey\}/);
+    expect(createEditor).toHaveBeenCalledTimes(1);
+  });
+});

@@ -260,11 +260,11 @@ export function ImageEditorCanvas({
           onPointerUp={endCompare}
           ref={stageRef}
         >
-          {/* One <canvas> for the image's lifetime: transferControlToOffscreen is one-shot. */}
+          {/* A canvas handed to the render worker can't be reused; canvasKey mounts a fresh one when needed. */}
           <canvas
             aria-label={alt}
             className="pointer-events-none absolute block"
-            key={editor.imageSrc}
+            key={editor.canvasKey}
             ref={editor.canvasRef}
             role="img"
             style={

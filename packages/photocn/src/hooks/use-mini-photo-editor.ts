@@ -141,10 +141,14 @@ export function useMiniPhotoEditor<
     shouldAutoReadExif &&
     exifSource !== null &&
     exifSource !== undefined;
+  // Only trust EXIF that was read from *this* image. For one render after a
+  // new image arrives, status/metadata still describe the previous one; using
+  // them would build a renderer with the wrong color space and immediately
+  // rebuild it on the same canvas.
   const exifColorReady =
     !shouldResolveColorFromExif ||
-    exif.status === "loaded" ||
-    exif.status === "error";
+    ((exif.status === "loaded" || exif.status === "error") &&
+      exif.source === exifSource);
   const resolvedColorspace = colorspace ?? detectColorSpace(exif.metadata);
   const editorImage = exifColorReady ? activeImage : null;
   const miniGl = useMiniGlEditor<TRenderer, TEditor, TImage>({

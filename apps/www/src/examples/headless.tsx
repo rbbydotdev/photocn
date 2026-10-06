@@ -30,7 +30,7 @@ export default function HeadlessExample() {
     <div className="grid gap-4 rounded-xl border p-4 sm:grid-cols-[1fr_220px]" ref={editor.rootRef}>
       <div className="relative h-[480px] overflow-hidden rounded-lg bg-muted" ref={editor.stageRef}>
         {editor.imageSrc ? (
-          <canvas className="absolute inset-0 size-full object-contain" key={editor.imageSrc} ref={editor.canvasRef} />
+          <canvas className="absolute inset-0 size-full object-contain" key={editor.canvasKey} ref={editor.canvasRef} />
         ) : null}
       </div>
       <div className="flex flex-col gap-4">

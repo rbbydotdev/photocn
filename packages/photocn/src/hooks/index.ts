@@ -59,6 +59,7 @@ export type {
 export type {
   CreateMiniGlEditor,
   CreateMiniGlEditorOptions,
+  ExclusiveCanvasFactory,
   MiniGlEditorImage,
   MiniGlEditorInstance,
   MiniGlEditorReady,

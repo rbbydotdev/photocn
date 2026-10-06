@@ -1,4 +1,4 @@
-import type { CreateMiniGlEditor, MiniGlEditorInstance } from "../hooks";
+import type { CreateMiniGlEditor, ExclusiveCanvasFactory, MiniGlEditorInstance } from "../hooks";
 import type { MiniGlRenderer } from "../dom";
 
 import { createWorkerEditor, type WorkerEditor } from "./bridge";
@@ -90,7 +90,11 @@ export function createWorkerMiniGlEditorFactory(opts: {
       : typeof opts.proxyMaxDim === "number"
         ? () => opts.proxyMaxDim as number
         : defaultProxyMaxDim;
-  return async ({ canvas, image, colorspace }) => {
+  const factory: WorkerCreateMiniGlEditor & ExclusiveCanvasFactory = async ({
+    canvas,
+    image,
+    colorspace,
+  }) => {
     const resolvedColorspace = (colorspace ?? "srgb") as "srgb" | "display-p3";
     const bitmap = await coerceImageBitmap(image);
     const maxDim = proxyResolver({ image: bitmap, canvas });
@@ -116,6 +120,9 @@ export function createWorkerMiniGlEditorFactory(opts: {
     (instance as unknown as { worker: WorkerEditor }).worker = editor;
     return instance;
   };
+  // transferControlToOffscreen is one-shot: each editor needs its own canvas.
+  factory.exclusiveCanvas = true;
+  return factory;
 }
 
 /**

@@ -26,6 +26,8 @@ export interface UseExifMetadataResult {
   status: ExifMetadataStatus;
   error: unknown;
   isLoading: boolean;
+  /** The source the current `metadata`/`status` belong to (null before any read). */
+  source: ExifSource | null;
   read: (
     source: ExifSource,
     options?: CreateExifHandleOptions,
@@ -51,6 +53,7 @@ export function useExifMetadata({
   const [handle, setHandle] = useState<BrowserExifHandle | undefined>();
   const [status, setStatus] = useState<ExifMetadataStatus>("idle");
   const [error, setError] = useState<unknown>(null);
+  const [readSource, setReadSource] = useState<ExifSource | null>(null);
 
   const reset = useCallback(() => {
     requestIdRef.current += 1;
@@ -58,6 +61,7 @@ export function useExifMetadata({
     setHandle(undefined);
     setStatus("idle");
     setError(null);
+    setReadSource(null);
   }, []);
 
   const read = useCallback(
@@ -81,6 +85,7 @@ export function useExifMetadata({
         if (requestIdRef.current === requestId) {
           setHandle(nextHandle);
           setMetadata(nextMetadata);
+          setReadSource(nextSource);
           setStatus("loaded");
           onReadRef.current?.(nextMetadata, nextHandle);
         }
@@ -89,6 +94,7 @@ export function useExifMetadata({
       } catch (nextError) {
         if (requestIdRef.current === requestId) {
           setError(nextError);
+          setReadSource(nextSource);
           setStatus("error");
           onErrorRef.current?.(nextError);
         }
@@ -118,6 +124,7 @@ export function useExifMetadata({
     status,
     error,
     isLoading: status === "loading",
+    source: readSource,
     read,
     reset,
   };
