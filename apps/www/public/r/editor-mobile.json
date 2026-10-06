@@ -1,0 +1,24 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "editor-mobile",
+  "title": "Mobile editor",
+  "description": "Photo first, tools at the bottom, controls in a sheet.",
+  "dependencies": [
+    "photocn@^0.1.0"
+  ],
+  "registryDependencies": [
+    "https://photocn.dev/r/image-editor.json"
+  ],
+  "files": [
+    {
+      "path": "src/registry/blocks/editor-mobile.tsx",
+      "content": "\"use client\";\n\nimport type { ImageEditorExportResult } from \"photocn/react\";\n\nimport { ImageEditor } from \"@/components/image-editor/image-editor\";\n\n/**\n * A full-screen phone editor: photo first, tools at the bottom, controls in\n * a sheet. Add it to a page and open it on any phone.\n */\nexport function EditorMobileBlock({\n  src,\n  onSave,\n}: {\n  src?: string | File | Blob;\n  onSave?: (result: ImageEditorExportResult) => void | Promise<void>;\n}) {\n  return <ImageEditor className=\"h-dvh min-h-0\" layout=\"compact\" onSave={onSave} src={src} />;\n}\n",
+      "type": "registry:component",
+      "target": "components/blocks/editor-mobile.tsx"
+    }
+  ],
+  "categories": [
+    "blocks"
+  ],
+  "type": "registry:block"
+}

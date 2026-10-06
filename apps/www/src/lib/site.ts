@@ -9,32 +9,11 @@ export const registryItemUrl = (name: string) => `${siteUrl}/r/${name}.json`;
 
 export const mainNav = [
   { title: "Docs", href: "/docs" },
-  { title: "Components", href: "/docs/components" },
-  { title: "API", href: "/docs/api" },
+  { title: "Components", href: "/docs/canvas" },
+  { title: "Blocks", href: "/blocks" },
 ] as const;
 
-export const docsNav = [
-  {
-    title: "Getting started",
-    items: [
-      { title: "Introduction", href: "/docs" },
-      { title: "Installation", href: "/docs/installation" },
-    ],
-  },
-  {
-    title: "Guides",
-    items: [
-      { title: "The full editor", href: "/docs/editor" },
-      { title: "Compose your own", href: "/docs/composition" },
-      { title: "Headless", href: "/docs/headless" },
-      { title: "Saving edits", href: "/docs/saving" },
-    ],
-  },
-  {
-    title: "Reference",
-    items: [
-      { title: "Components", href: "/docs/components" },
-      { title: "useImageEditor", href: "/docs/api" },
-    ],
-  },
-] as const;
+export const xUrl = "https://x.com/rbbydotdev";
+export const sponsorUrl = "https://github.com/sponsors/rbbydotdev";
+export const githubRepo = "rbbydotdev/photocn";
+

@@ -1,0 +1,28 @@
+---
+title: "Compact Layout"
+description: "The phone layout: the photo first, tools at the bottom, and controls in a sheet."
+section: "Components"
+order: 33
+item: "image-editor-compact-layout"
+---
+<ComponentPreview name="compact-layout-demo" />
+
+## Installation
+
+<InstallCommand item="image-editor-compact-layout" />
+
+## Usage
+
+```tsx
+// The full editor switches to this layout below 640px wide.
+<ImageEditor src="/photo.jpg" layout="compact" />
+```
+
+## Props
+
+| Prop | Type | Description |
+| --- | --- | --- |
+| `tools` | `EditorToolbarTool[]` | The tools in the bottom bar. |
+| `panels` | `Record<toolId, ReactNode>` | Replace or add panels. |
+| `panelMode` | `"drawer" \| "inline"` | Where panels open. Default: a sheet on phones, below the photo on wider screens. |
+| `onSave` | `(result) => Promise<void>` | Adds a Save button to the export panel. |

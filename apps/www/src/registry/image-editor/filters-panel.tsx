@@ -96,7 +96,7 @@ export function FiltersPanel({
       >
         <PanelResetHeader
           title="Filters"
-          description="Instagram-style LUT presets"
+          description="Film-style looks"
           onReset={onReset}
           resetDisabled={disabled}
         />

@@ -1,0 +1,45 @@
+---
+title: "Crop & transform"
+description: "How crop, straighten, perspective and rotate work together."
+section: "Guides"
+order: 14
+---
+Crop works like the Photos app: every change can be undone or adjusted later. Edits never overwrite the original. The editor always starts from the original photo and applies the changes in the same order:
+
+```
+flip and rotate → perspective → straighten → crop → resize (only when exporting)
+```
+
+- **The crop is a window.** Open the crop tool again and you can make it bigger.
+- **The frame stays put.** When you straighten or change perspective, the photo turns and zooms behind the frame so no empty corners show. Set straighten back to 0 and your original crop returns.
+- **Rotating turns the whole picture**, crop included. A 4:5 crop becomes 5:4.
+- **There's no zoom slider.** Make the crop smaller, or scroll or pinch inside the frame.
+- **Resizing happens when you export**, in the export panel.
+
+<ComponentPreview name="crop-demo" />
+
+## Keyboard shortcuts
+
+| Keys | Action |
+| --- | --- |
+| R / ⇧R | Rotate right / left |
+| H · V | Flip horizontal · vertical |
+| X | Switch portrait and landscape |
+| [ · ] | Straighten by 0.5° (⇧ for 5°) |
+| Arrows | Move the photo under the frame |
+| Esc | Cancel the current drag |
+| ⌫ | Reset the crop |
+| ↵ | Done |
+
+## From code
+
+```tsx
+const { geometry } = useImageEditor();
+
+geometry.rotate(1);                    // quarter turn clockwise
+geometry.setAspectRatio("16:9");
+geometry.toggleOrientation();          // 16:9 → 9:16
+geometry.setStraighten(3.5);           // -45 to 45 degrees
+geometry.setPerspective({ y: 0.25 });  // -1 to 1
+geometry.setCrop({ x: 0.1, y: 0.1, width: 0.8, height: 0.8 });
+```

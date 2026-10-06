@@ -89,8 +89,10 @@ export function ImageEditorCompactLayout({
   };
 
   // Keep the photo above the drawer: pad the canvas by the drawer's peek height.
+  // The canvas sits above the bottom tool bar (~3.25rem), so this leaves
+  // ~1.5rem between the photo and the sheet: room for the 44px crop handles.
   const drawerInset =
-    mode === "drawer" && panelOpen ? `calc(${SNAP_POINTS[0] * 100}dvh - 4.5rem)` : undefined;
+    mode === "drawer" && panelOpen ? `calc(${SNAP_POINTS[0] * 100}dvh - 1.75rem)` : undefined;
 
   return (
     <div

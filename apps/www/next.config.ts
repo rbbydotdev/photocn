@@ -1,5 +1,6 @@
 import path from "node:path";
 
+import { withContentCollections } from "@content-collections/next";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -11,4 +12,5 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: path.join(__dirname, "../.."),
 };
 
-export default nextConfig;
+// withContentCollections must be the outermost wrapper.
+export default withContentCollections(nextConfig);

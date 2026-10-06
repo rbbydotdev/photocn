@@ -1,0 +1,68 @@
+---
+title: "Installation"
+description: "Add photocn to a React project that uses shadcn/ui."
+section: "Basics"
+order: 2
+---
+## 1. Set up shadcn/ui
+
+photocn uses the Radix version of shadcn/ui. New projects default to Base UI, so choose Radix when you set up:
+
+```bash
+npx shadcn@latest init -b radix
+```
+
+## 2. Add the photocn registry
+
+Run this once per project. It tells the shadcn CLI where `@photocn/...` components live:
+
+```bash
+npx shadcn@latest registry add @photocn=https://photocn.dev/r/{name}.json
+```
+
+This adds the following to your `components.json`:
+
+```json
+{
+  "registries": {
+    "@photocn": "https://photocn.dev/r/{name}.json"
+  }
+}
+```
+
+## 3. Add the editor
+
+<InstallCommand item="image-editor" />
+
+This installs the `photocn` package, the shadcn/ui components the editor needs, and the editor files in `components/image-editor/`.
+
+## 4. Use it
+
+```tsx
+import { ImageEditor } from "@/components/image-editor/image-editor";
+
+export default function Page() {
+  return <ImageEditor className="h-dvh" src="/photo.jpg" />;
+}
+```
+
+The editor is a client component. `src` can be a URL, a `File`, a `Blob`, an `ArrayBuffer` or an `<img>`. Images from other domains need CORS headers.
+
+## Only need some pieces?
+
+Every piece can be installed on its own:
+
+<InstallCommand items="image-editor-canvas image-editor-filters image-editor-export" />
+
+## Content-Security-Policy
+
+The renderer runs in a Web Worker started from a `blob:` URL, so no bundler setup is needed. If your CSP blocks `worker-src blob:`, start the worker yourself:
+
+```tsx
+<ImageEditor
+  src={src}
+  spawnWorker={() =>
+    new Worker(new URL("photocn/worker/entry", import.meta.url), { type: "module" })
+  }
+/>
+```

@@ -14,3 +14,8 @@ export async function readExampleSource(name: string) {
   const file = path.join(process.cwd(), "src/examples", `${name}.tsx`);
   return toConsumerImports(await readFile(file, "utf8")).trim();
 }
+
+export async function readBlockSource(file: string) {
+  const path_ = path.join(process.cwd(), "src/registry/blocks", file);
+  return toConsumerImports(await readFile(path_, "utf8")).trim();
+}

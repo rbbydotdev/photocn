@@ -269,13 +269,16 @@ function EditorActionButton({
     </Button>
   );
   if (showLabel) return button;
+  // Own provider so the buttons work anywhere, even in apps without one.
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        {disabled ? <span className="inline-flex">{button}</span> : button}
-      </TooltipTrigger>
-      <TooltipContent side="bottom">{label}</TooltipContent>
-    </Tooltip>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          {disabled ? <span className="inline-flex">{button}</span> : button}
+        </TooltipTrigger>
+        <TooltipContent side="bottom">{label}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 

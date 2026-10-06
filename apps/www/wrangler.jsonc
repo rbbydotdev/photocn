@@ -8,8 +8,8 @@
     "binding": "ASSETS",
     "not_found_handling": "404-page",
     "html_handling": "auto-trailing-slash",
-    // The worker only needs to see docs requests (markdown negotiation).
-    "run_worker_first": ["/docs", "/docs/*"]
+    // The worker only needs to see docs and /llm requests (markdown twins).
+    "run_worker_first": ["/docs", "/docs/*", "/docs.md", "/llm/*"]
   },
   "routes": [
     { "pattern": "photocn.dev", "custom_domain": true },

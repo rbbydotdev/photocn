@@ -1,0 +1,27 @@
+---
+title: "Recipes"
+description: "Save a look as JSON and apply it to any photo."
+section: "Components"
+order: 31
+item: "image-editor-recipes"
+---
+<ComponentPreview name="recipes-demo" />
+
+## Installation
+
+<InstallCommand item="image-editor-recipes" />
+
+## Usage
+
+```tsx
+import { ImageEditorRecipes } from "@/components/image-editor/recipes";
+
+<ImageEditorRecipes />
+```
+
+## Props
+
+| Prop | Type | Description |
+| --- | --- | --- |
+| `onError` | `(error) => void` | Called when a recipe file can't be read. |
+| `disabled` | `boolean` | Turn off the buttons. |

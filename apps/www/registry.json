@@ -517,6 +517,198 @@
       "categories": [
         "image-editor"
       ]
+    },
+    {
+      "name": "editor",
+      "type": "registry:block",
+      "title": "Editor",
+      "description": "The full editor, filling the screen, with a ⌘K command menu.",
+      "dependencies": [
+        "photocn@^0.1.0"
+      ],
+      "registryDependencies": [
+        "https://photocn.dev/r/image-editor-command-menu.json",
+        "https://photocn.dev/r/image-editor.json"
+      ],
+      "files": [
+        {
+          "path": "src/registry/blocks/editor.tsx",
+          "type": "registry:component",
+          "target": "components/blocks/editor.tsx"
+        }
+      ],
+      "categories": [
+        "blocks"
+      ]
+    },
+    {
+      "name": "editor-minimal",
+      "type": "registry:block",
+      "title": "Minimal editor",
+      "description": "Adjust, filters and crop, plus export. Nothing else.",
+      "dependencies": [
+        "lucide-react",
+        "photocn@^0.1.0"
+      ],
+      "registryDependencies": [
+        "https://photocn.dev/r/image-editor-adjustments.json",
+        "https://photocn.dev/r/image-editor-canvas.json",
+        "https://photocn.dev/r/image-editor-crop.json",
+        "https://photocn.dev/r/image-editor-export.json",
+        "https://photocn.dev/r/image-editor-filters.json",
+        "https://photocn.dev/r/image-editor-toolbar.json"
+      ],
+      "files": [
+        {
+          "path": "src/registry/blocks/editor-minimal.tsx",
+          "type": "registry:component",
+          "target": "components/blocks/editor-minimal.tsx"
+        }
+      ],
+      "categories": [
+        "blocks"
+      ]
+    },
+    {
+      "name": "editor-mobile",
+      "type": "registry:block",
+      "title": "Mobile editor",
+      "description": "Photo first, tools at the bottom, controls in a sheet.",
+      "dependencies": [
+        "photocn@^0.1.0"
+      ],
+      "registryDependencies": [
+        "https://photocn.dev/r/image-editor.json"
+      ],
+      "files": [
+        {
+          "path": "src/registry/blocks/editor-mobile.tsx",
+          "type": "registry:component",
+          "target": "components/blocks/editor-mobile.tsx"
+        }
+      ],
+      "categories": [
+        "blocks"
+      ]
+    },
+    {
+      "name": "avatar-cropper",
+      "type": "registry:block",
+      "title": "Avatar cropper",
+      "description": "Pick a photo, frame it in a square, save a 512px avatar.",
+      "dependencies": [
+        "lucide-react",
+        "photocn@^0.1.0"
+      ],
+      "registryDependencies": [
+        "button",
+        "dialog",
+        "https://photocn.dev/r/image-editor-canvas.json"
+      ],
+      "files": [
+        {
+          "path": "src/registry/blocks/avatar-cropper.tsx",
+          "type": "registry:component",
+          "target": "components/blocks/avatar-cropper.tsx"
+        }
+      ],
+      "categories": [
+        "blocks"
+      ]
+    },
+    {
+      "name": "upload-editor",
+      "type": "registry:block",
+      "title": "Upload editor",
+      "description": "Drop a photo, edit it, then upload the result.",
+      "dependencies": [
+        "lucide-react",
+        "photocn@^0.1.0"
+      ],
+      "registryDependencies": [
+        "button",
+        "card",
+        "https://photocn.dev/r/image-editor.json"
+      ],
+      "files": [
+        {
+          "path": "src/registry/blocks/upload-editor.tsx",
+          "type": "registry:component",
+          "target": "components/blocks/upload-editor.tsx"
+        }
+      ],
+      "categories": [
+        "blocks"
+      ]
+    },
+    {
+      "name": "filter-picker",
+      "type": "registry:block",
+      "title": "Filter picker",
+      "description": "A phone-style row of looks with a strength slider.",
+      "dependencies": [
+        "photocn@^0.1.0"
+      ],
+      "registryDependencies": [
+        "button",
+        "https://photocn.dev/r/image-editor-canvas.json",
+        "https://photocn.dev/r/image-editor-export.json",
+        "slider"
+      ],
+      "files": [
+        {
+          "path": "src/registry/blocks/filter-picker.tsx",
+          "type": "registry:component",
+          "target": "components/blocks/filter-picker.tsx"
+        }
+      ],
+      "categories": [
+        "blocks"
+      ]
+    },
+    {
+      "name": "before-after",
+      "type": "registry:block",
+      "title": "Before / after",
+      "description": "Drag to compare the original with the edit.",
+      "dependencies": [
+        "photocn@^0.1.0"
+      ],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/registry/blocks/before-after.tsx",
+          "type": "registry:component",
+          "target": "components/blocks/before-after.tsx"
+        }
+      ],
+      "categories": [
+        "blocks"
+      ]
+    },
+    {
+      "name": "batch-looks",
+      "type": "registry:block",
+      "title": "Batch looks",
+      "description": "Choose one look and apply it to many photos at once.",
+      "dependencies": [
+        "lucide-react",
+        "photocn@^0.1.0"
+      ],
+      "registryDependencies": [
+        "button",
+        "slider"
+      ],
+      "files": [
+        {
+          "path": "src/registry/blocks/batch-looks.tsx",
+          "type": "registry:component",
+          "target": "components/blocks/batch-looks.tsx"
+        }
+      ],
+      "categories": [
+        "blocks"
+      ]
     }
   ]
 }

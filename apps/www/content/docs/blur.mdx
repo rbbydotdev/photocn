@@ -1,0 +1,27 @@
+---
+title: "Blur"
+description: "Lens blur (bokeh or gaussian). Drag the dot on the photo to choose what stays sharp."
+section: "Components"
+order: 26
+item: "image-editor-blur"
+---
+<ComponentPreview name="blur-demo" />
+
+## Installation
+
+<InstallCommand item="image-editor-blur" />
+
+## Usage
+
+```tsx
+import { ImageEditorBlur } from "@/components/image-editor/blur-panel";
+
+<ImageEditorBlur />
+```
+
+## Props
+
+| Prop | Type | Description |
+| --- | --- | --- |
+| `activeKind` | `"bokeh" \| "gaussian"` | The blur type shown. |
+| `disabled` | `boolean` | Turn off the panel. |

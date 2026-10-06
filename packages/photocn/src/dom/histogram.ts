@@ -32,6 +32,12 @@ export interface DrawRgbHistogramOptions {
   compositeOperation?: GlobalCompositeOperation;
   alpha?: number;
   clear?: boolean;
+  /**
+   * Smooth the drawn curve (display only; the data stays exact). Edits that
+   * stretch tones leave some of the 256 levels empty, which draws as a comb
+   * of spikes. Lightroom and Photos smooth this too. Default `true`.
+   */
+  smooth?: boolean;
 }
 
 export type HistogramPixelSource =
@@ -129,9 +135,10 @@ export function drawRgbHistogram(
 
   context.globalCompositeOperation = options.compositeOperation ?? "lighter";
   context.globalAlpha = options.alpha ?? 1;
-  drawChannel(context, options.red ?? "#c13119", histogram.red, histogram.max.red);
-  drawChannel(context, options.green ?? "#0c9427", histogram.green, histogram.max.green);
-  drawChannel(context, options.blue ?? "#1e73be", histogram.blue, histogram.max.blue);
+  const smooth = options.smooth ?? true;
+  drawChannel(context, options.red ?? "#c13119", histogram.red, histogram.max.red, smooth);
+  drawChannel(context, options.green ?? "#0c9427", histogram.green, histogram.max.green, smooth);
+  drawChannel(context, options.blue ?? "#1e73be", histogram.blue, histogram.max.blue, smooth);
   context.globalCompositeOperation = previousComposite;
   context.globalAlpha = previousAlpha;
 }
@@ -230,16 +237,32 @@ function interpolateGaps(channel: Uint32Array): Float32Array {
   return out;
 }
 
+/** 5-tap binomial blur [1 4 6 4 1] / 16 over the 256 levels (edges clamped). */
+export function smoothBins(values: ArrayLike<number>): Float64Array {
+  const out = new Float64Array(256);
+  const at = (i: number) => values[Math.min(255, Math.max(0, i))] ?? 0;
+  for (let i = 0; i < 256; i += 1) {
+    out[i] = (at(i - 2) + 4 * at(i - 1) + 6 * at(i) + 4 * at(i + 1) + at(i + 2)) / 16;
+  }
+  return out;
+}
+
 function drawChannel(
   context: HistogramRenderingContext,
   color: string,
   channel: Uint32Array,
-  max: number,
+  rawMax: number,
+  smooth = true,
 ): void {
-  if (max <= 0) return;
+  if (rawMax <= 0) return;
 
   const { width, height } = context.canvas;
-  const values = interpolateGaps(channel);
+  const filled = interpolateGaps(channel);
+  const values = smooth ? smoothBins(filled) : filled;
+  // Scale to the drawn peak so smoothing doesn't flatten the curve.
+  let max = 0;
+  for (let i = 0; i < 256; i += 1) max = Math.max(max, values[i] ?? 0);
+  if (max <= 0) return;
   let x = 0;
 
   context.beginPath();

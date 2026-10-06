@@ -1,0 +1,27 @@
+---
+title: "Blend"
+description: "Blend a second image into the photo."
+section: "Components"
+order: 27
+item: "image-editor-blend"
+---
+<ComponentPreview name="blend-demo" />
+
+## Installation
+
+<InstallCommand item="image-editor-blend" />
+
+## Usage
+
+```tsx
+import { ImageEditorBlend } from "@/components/image-editor/blend-panel";
+
+<ImageEditorBlend />
+```
+
+## Props
+
+| Prop | Type | Description |
+| --- | --- | --- |
+| `disabled` | `boolean` | Turn off the panel. |
+| `onError` | `(error) => void` | Called when the second image can't be read. |

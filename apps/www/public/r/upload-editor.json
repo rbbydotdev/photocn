@@ -1,0 +1,27 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "upload-editor",
+  "title": "Upload editor",
+  "description": "Drop a photo, edit it, then upload the result.",
+  "dependencies": [
+    "lucide-react",
+    "photocn@^0.1.0"
+  ],
+  "registryDependencies": [
+    "button",
+    "card",
+    "https://photocn.dev/r/image-editor.json"
+  ],
+  "files": [
+    {
+      "path": "src/registry/blocks/upload-editor.tsx",
+      "content": "\"use client\";\n\nimport { useState, type DragEvent } from \"react\";\nimport { ImageUpIcon } from \"lucide-react\";\nimport type { ImageEditorExportResult } from \"photocn/react\";\n\nimport { Button } from \"@/components/ui/button\";\nimport { Card } from \"@/components/ui/card\";\nimport { ImageEditor } from \"@/components/image-editor/image-editor\";\nimport { cn } from \"@/lib/utils\";\n\nexport interface UploadEditorProps {\n  /** Receives the edited image. Upload it wherever you like. */\n  onUpload?: (result: ImageEditorExportResult) => void | Promise<void>;\n  className?: string;\n}\n\n/** Drop a photo, edit it, upload the result. */\nexport function UploadEditor({ onUpload, className }: UploadEditorProps) {\n  const [file, setFile] = useState<File | null>(null);\n  const [dragging, setDragging] = useState(false);\n  const [done, setDone] = useState<string | null>(null);\n\n  const accept = (next?: File | null) => {\n    if (next?.type.startsWith(\"image/\")) {\n      setDone(null);\n      setFile(next);\n    }\n  };\n\n  if (file) {\n    return (\n      <Card className={cn(\"h-[640px] gap-0 overflow-hidden p-0\", className)}>\n        <ImageEditor\n          className=\"min-h-0\"\n          onSave={async (result) => {\n            await onUpload?.(result);\n            setDone(result.filename);\n            setFile(null);\n          }}\n          showOpenButton={false}\n          src={file}\n          toolbarExtra={\n            <Button onClick={() => setFile(null)} size=\"sm\" type=\"button\" variant=\"ghost\">\n              Cancel\n            </Button>\n          }\n        />\n      </Card>\n    );\n  }\n\n  return (\n    <label\n      className={cn(\n        \"flex h-64 cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed text-center transition-colors\",\n        dragging ? \"border-primary bg-primary/5\" : \"hover:bg-muted/50\",\n        className,\n      )}\n      onDragLeave={() => setDragging(false)}\n      onDragOver={(event: DragEvent) => {\n        event.preventDefault();\n        setDragging(true);\n      }}\n      onDrop={(event: DragEvent) => {\n        event.preventDefault();\n        setDragging(false);\n        accept(event.dataTransfer.files[0]);\n      }}\n    >\n      <ImageUpIcon className=\"size-8 text-muted-foreground\" />\n      <span className=\"font-medium\">{done ? `Uploaded ${done}` : \"Drop a photo or click to choose\"}</span>\n      <span className=\"text-sm text-muted-foreground\">Edit it before it uploads.</span>\n      <input accept=\"image/*\" className=\"sr-only\" onChange={(event) => accept(event.target.files?.[0])} type=\"file\" />\n    </label>\n  );\n}\n",
+      "type": "registry:component",
+      "target": "components/blocks/upload-editor.tsx"
+    }
+  ],
+  "categories": [
+    "blocks"
+  ],
+  "type": "registry:block"
+}

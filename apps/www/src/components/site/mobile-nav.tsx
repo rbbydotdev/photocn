@@ -7,12 +7,13 @@ import { MenuIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { docsNav, mainNav } from "@/lib/site";
+import type { docsNav as DocsNav } from "@/lib/docs";
+import { mainNav } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
 import { Logo } from "./logo";
 
-export function MobileNav({ className }: { className?: string }) {
+export function MobileNav({ className, docsNav }: { className?: string; docsNav: typeof DocsNav }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const link = (href: string, title: string) => (

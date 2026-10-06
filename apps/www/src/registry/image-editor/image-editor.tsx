@@ -188,6 +188,7 @@ export function ImageEditorStatusBadge() {
   if (editor.status === "error") {
     const message = errorMessage(editor.error);
     return (
+      <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
           <Badge className="max-w-48" variant="destructive">
@@ -197,6 +198,7 @@ export function ImageEditorStatusBadge() {
         </TooltipTrigger>
         <TooltipContent className="max-w-sm">{message}</TooltipContent>
       </Tooltip>
+      </TooltipProvider>
     );
   }
   if (editor.status === "loading") {

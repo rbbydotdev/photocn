@@ -1,0 +1,32 @@
+---
+title: "Saving edits"
+description: "Save the finished image, the edits, or both."
+section: "Guides"
+order: 13
+---
+## Upload the result
+
+`onSave` adds a Save button to the export panel. It receives the image as a `Blob`. JPEG exports keep the original EXIF data.
+
+```tsx
+<ImageEditor
+  src={photo.url}
+  onSave={async ({ blob, filename }) => {
+    const body = new FormData();
+    body.append("file", blob, filename);
+    await fetch("/api/photos", { method: "POST", body });
+  }}
+/>
+```
+
+Or export from code: `await editor.exportImage({ format: "webp", quality: 0.9, width: 1600 })`.
+
+## Save the edits instead
+
+Edits are plain data. `onParamsChange` fires on every change, and `buildRecipe(params)` turns the edits into a small JSON object you can store and apply later with `editor.recipes.apply(recipe)`. To reopen a whole session, pass `defaultParams`.
+
+<ComponentPreview name="controlled" />
+
+## Older saved sessions
+
+Edits saved by earlier versions are converted automatically when you pass them to `defaultParams` or `setParams`. To convert them yourself, call `normalizeEditorParams(saved)` from `photocn`.

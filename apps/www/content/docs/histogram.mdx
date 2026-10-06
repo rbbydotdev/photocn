@@ -1,0 +1,27 @@
+---
+title: "Histogram"
+description: "A live RGB histogram of the edited photo."
+section: "Components"
+order: 28
+item: "image-editor-histogram"
+---
+<ComponentPreview name="histogram-demo" />
+
+## Installation
+
+<InstallCommand item="image-editor-histogram" />
+
+## Usage
+
+```tsx
+import { ImageEditorHistogram } from "@/components/image-editor/histogram";
+
+<ImageEditorHistogram />
+```
+
+## Props
+
+| Prop | Type | Description |
+| --- | --- | --- |
+| `showHeader` | `boolean` | Show the label and pixel count. Default `true`. |
+| `className` | `string` | Classes for the outer element. |

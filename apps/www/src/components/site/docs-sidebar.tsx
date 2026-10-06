@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { docsNav } from "@/lib/site";
+import type { docsNav as DocsNav } from "@/lib/docs";
 import { cn } from "@/lib/utils";
 
-export function DocsSidebar() {
+export function DocsSidebar({ nav: docsNav }: { nav: typeof DocsNav }) {
   const pathname = usePathname();
   return (
     <nav className="flex flex-col gap-6 text-sm">
@@ -15,6 +15,7 @@ export function DocsSidebar() {
           <h4 className="px-2 pb-1 text-xs font-medium text-muted-foreground">{section.title}</h4>
           {section.items.map((item) => (
             <Link
+              {...(item.external ? { target: "_blank" } : {})}
               className={cn(
                 "rounded-md px-2 py-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
                 pathname === item.href && "bg-muted font-medium text-foreground",

@@ -22,3 +22,23 @@ jobs:
       - run: pnpm --filter www build
         env:
           NEXT_PUBLIC_SITE_URL: https://photocn.dev
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter photocn build
+      - run: pnpm --filter www build
+      - run: pnpm --filter www exec playwright install --with-deps chromium
+      - run: pnpm --filter www test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-traces
+          path: apps/www/test-results

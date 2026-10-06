@@ -1,0 +1,34 @@
+---
+title: "Compose your own"
+description: "Put the pieces you want into your own layout."
+section: "Guides"
+order: 11
+---
+## How it works
+
+`<ImageEditorProvider>` holds the image, the edits and the undo history. Every `ImageEditor*` component inside it reads from it with `useImageEditor()`, so they stay in sync automatically.
+
+```tsx
+<ImageEditorProvider src={file} onParamsChange={save}>
+  <ImageEditorCanvas />
+  <ImageEditorAdjustments />
+  <ImageEditorUndoButton />
+  <MyOwnControl /> {/* calls useImageEditor() */}
+</ImageEditorProvider>
+```
+
+## A smaller editor
+
+The canvas, adjustments, undo, compare and export.
+
+<ComponentPreview name="compose-your-own" />
+
+## Your own controls
+
+This filter picker is plain JSX on top of `useImageEditor()`. It lists `editor.filters.presets`, calls `editor.filters.select()`, and shares the canvas.
+
+<ComponentPreview name="filter-strip" />
+
+## Controlled versions
+
+Each panel file also exports a plain version that takes `value` and `onChange`: `AdjustmentPanel`, `CurvesPanel`, `FiltersPanel` and so on. Use these when you want to drive a panel from your own state, or use it outside a provider.

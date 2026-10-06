@@ -1,0 +1,27 @@
+---
+title: "Using with AI agents"
+description: "Docs and install commands that coding agents can read."
+section: "Guides"
+order: 15
+---
+## llms.txt
+
+[/llms.txt](/llms.txt) lists every component and block with an install command and a short example. [/llms-full.txt](/llms-full.txt) has every docs page in one file.
+
+## Markdown pages
+
+Every docs page is also available as markdown. Add `.md` to the URL (for example [/docs/editor.md](/docs/editor.md)), or request the page with `Accept: text/markdown`. Each page also has a **Copy page** button.
+
+## Per-component pages
+
+`/llm/<name>` describes one registry item: what it does, how to install it, and its files. For example [/llm/image-editor](/llm/image-editor).
+
+## shadcn MCP
+
+With the shadcn MCP server, agents can browse and install from photocn directly:
+
+```bash
+npx shadcn@latest mcp init --client claude
+```
+
+Then add the registry to `components.json`, as described in [Installation](/docs/installation).

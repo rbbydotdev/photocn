@@ -1,0 +1,28 @@
+---
+title: "Curves"
+description: "Tone curves for RGB and each color channel, drawn over a live histogram."
+section: "Components"
+order: 24
+item: "image-editor-curves"
+---
+<ComponentPreview name="curves-demo" />
+
+## Installation
+
+<InstallCommand item="image-editor-curves" />
+
+## Usage
+
+```tsx
+import { ImageEditorCurves } from "@/components/image-editor/curves-panel";
+
+<ImageEditorCurves />
+```
+
+## Props
+
+| Prop | Type | Description |
+| --- | --- | --- |
+| `activeChannel` | `"rgb" \| "r" \| "g" \| "b"` | The channel being edited. |
+| `size` | `number` | Size of the curve area in px. |
+| `histogram` | `RgbHistogram \| null` | Override the histogram behind the curve. |

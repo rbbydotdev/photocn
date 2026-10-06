@@ -465,3 +465,16 @@ describe("useHistogram", () => {
     });
   });
 });
+
+describe("smoothBins (display smoothing)", () => {
+  it("fills a comb of empty levels without moving the overall shape", async () => {
+    const { smoothBins } = await import("../dom/histogram");
+    const comb = Array.from({ length: 256 }, (_, i) => (i % 3 === 0 ? 0 : 300));
+    const smooth = smoothBins(comb);
+    const middle = Array.from(smooth.slice(10, 246));
+    const spread = Math.max(...middle) - Math.min(...middle);
+    expect(spread).toBeLessThan(60); // was 300 (0 vs 300)
+    const total = (values: ArrayLike<number>) => Array.from(values).reduce((a, b) => a + b, 0);
+    expect(total(smooth)).toBeCloseTo(total(comb), -2);
+  });
+});

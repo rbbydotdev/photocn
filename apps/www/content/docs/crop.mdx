@@ -1,0 +1,32 @@
+---
+title: "Crop"
+description: "Rotate, flip, aspect ratio, straighten and perspective. You crop by dragging the frame on the photo."
+section: "Components"
+order: 25
+item: "image-editor-crop"
+---
+<ComponentPreview name="crop-demo" />
+
+## Installation
+
+<InstallCommand item="image-editor-crop" />
+
+## Usage
+
+```tsx
+import { ImageEditorCrop } from "@/components/image-editor/crop-panel";
+
+// The canvas shows the crop frame while the "compose" tool is active.
+<ImageEditorProvider src="/photo.jpg" defaultTool="compose">
+  <ImageEditorCanvas />
+  <ImageEditorCrop />
+</ImageEditorProvider>
+```
+
+## Props
+
+| Prop | Type | Description |
+| --- | --- | --- |
+| `hidePerspective` | `boolean` | Hide the perspective controls. |
+| `showShortcuts` | `boolean` | Show the list of keyboard shortcuts. Default `true`. |
+| `onDone` | `() => void` | Called by the Done button. Default: go back to the previous tool. |

@@ -1,3 +1,4 @@
+import { SiteFooter } from "@/components/site/site-footer";
 import { SiteHeader } from "@/components/site/site-header";
 
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
@@ -5,6 +6,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
     <>
       <SiteHeader />
       {children}
+      <SiteFooter />
     </>
   );
 }

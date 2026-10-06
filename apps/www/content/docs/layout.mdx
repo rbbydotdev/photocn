@@ -1,0 +1,31 @@
+---
+title: "Layout"
+description: "The desktop layout: a toolbar on top and a resizable sidebar."
+section: "Components"
+order: 34
+item: "image-editor-layout"
+---
+<ComponentPreview name="layout-demo" />
+
+## Installation
+
+<InstallCommand item="image-editor-layout" />
+
+## Usage
+
+```tsx
+import { ImageEditorLayout } from "@/components/image-editor/layout";
+
+<ImageEditorLayout toolbar={...} sidebar={<ImageEditorCurves />}>
+  <ImageEditorCanvas />
+</ImageEditorLayout>
+```
+
+## Props
+
+| Prop | Type | Description |
+| --- | --- | --- |
+| `toolbar` | `ReactNode` | Content of the top bar. |
+| `sidebar` | `ReactNode` | Content of the sidebar. |
+| `resizableSidebar` | `boolean` | Let users drag to resize the sidebar. Default `true`. |
+| `sidebarDefaultSize / sidebarMinSize / sidebarMaxSize` | `string \| number` | Sidebar sizes, e.g. `"338px"`. |

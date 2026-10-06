@@ -1,0 +1,28 @@
+---
+title: "Adjustments"
+description: "Sliders for light, color and effects."
+section: "Components"
+order: 22
+item: "image-editor-adjustments"
+---
+<ComponentPreview name="adjustments-demo" />
+
+## Installation
+
+<InstallCommand item="image-editor-adjustments" />
+
+## Usage
+
+```tsx
+import { ImageEditorAdjustments } from "@/components/image-editor/adjustments-panel";
+
+<ImageEditorAdjustments defaultSection="colors" />
+```
+
+## Props
+
+| Prop | Type | Description |
+| --- | --- | --- |
+| `defaultSection` | `"lights" \| "colors" \| "effects"` | The tab shown first. |
+| `disabled` | `boolean` | Turn off the sliders. |
+| `className` | `string` | Classes for the panel. |

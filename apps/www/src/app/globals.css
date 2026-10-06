@@ -140,3 +140,54 @@
 .dark .shiki span {
   color: var(--shiki-dark);
 }
+
+/* Docs pages (MDX) */
+.docs-prose {
+  @apply flex flex-col gap-5 leading-7 text-pretty;
+}
+.docs-prose > p,
+.docs-prose li {
+  @apply text-muted-foreground;
+}
+.docs-prose :where(strong) {
+  @apply font-semibold text-foreground;
+}
+.docs-prose :where(h2) {
+  @apply mt-8 scroll-mt-20 text-xl font-semibold tracking-tight text-foreground;
+}
+.docs-prose :where(h3) {
+  @apply mt-4 scroll-mt-20 text-lg font-semibold text-foreground;
+}
+.docs-prose :where(a:not(.not-prose *)) {
+  @apply font-medium text-foreground underline underline-offset-4;
+}
+.docs-prose :where(ul) {
+  @apply ml-5 flex list-disc flex-col gap-1.5;
+}
+.docs-prose :where(ol) {
+  @apply ml-5 flex list-decimal flex-col gap-1.5;
+}
+.docs-prose :where(:not(pre) > code) {
+  @apply rounded bg-muted px-1 py-0.5 font-mono text-[0.85em] text-foreground;
+}
+.docs-prose :where(pre.shiki) {
+  @apply overflow-x-auto rounded-xl border bg-muted/30! p-4 text-[13px] leading-relaxed;
+}
+.docs-prose :where(.docs-table) {
+  @apply w-full overflow-x-auto rounded-xl border;
+}
+.docs-prose :where(table) {
+  @apply w-full text-sm;
+}
+.docs-prose :where(th) {
+  @apply border-b bg-muted/40 px-3 py-2 text-left text-xs font-medium text-muted-foreground;
+}
+.docs-prose :where(td) {
+  @apply border-b px-3 py-2 align-top text-muted-foreground;
+}
+.docs-prose :where(tr:last-child td) {
+  @apply border-b-0;
+}
+.docs-prose :where(td code) {
+  @apply whitespace-nowrap;
+}

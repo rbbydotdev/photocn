@@ -1,0 +1,36 @@
+---
+title: "Introduction"
+description: "Photo editor components for React, built for shadcn/ui."
+section: "Basics"
+order: 1
+---
+photocn is a photo editor you install with the shadcn CLI. Add the whole editor with one command, or pick the pieces you need and arrange them yourself. The files are copied into your project, so you can change anything.
+
+<ComponentPreview name="full-editor" />
+
+## How it works
+
+photocn has two parts:
+
+- **The engine**: the `photocn` npm package. It does the image work: WebGL rendering in a background thread, filters, crop and rotate, EXIF, undo history, and export.
+- **The components**: the editor UI, installed into `components/image-editor/` by the shadcn CLI. They use your theme and your shadcn/ui components.
+
+You get engine fixes from npm updates, and the UI stays yours.
+
+## Three ways to use it
+
+- [The full editor](/docs/editor): one component with every tool.
+- [Compose your own](/docs/composition): put the pieces you want in your own layout.
+- [Headless](/docs/headless): use the `useImageEditor` hook with your own UI.
+
+## Features
+
+- Light, color and effect adjustments
+- Curves for RGB and each channel, over a live histogram
+- 13 filters
+- Crop, straighten, perspective, rotate and flip, all reversible
+- Lens blur and image blending
+- Undo and redo, and hold to compare with the original
+- PNG, JPEG (keeps EXIF) and WebP export, at any size
+- Works on phones: bottom tool bar, panels in a sheet, pinch to zoom
+- Display P3 color

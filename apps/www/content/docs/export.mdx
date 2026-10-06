@@ -1,0 +1,31 @@
+---
+title: "Export"
+description: "Choose the format, quality and size, then download or save."
+section: "Components"
+order: 30
+item: "image-editor-export"
+---
+<ComponentPreview name="export-demo" />
+
+## Installation
+
+<InstallCommand item="image-editor-export" />
+
+## Usage
+
+```tsx
+import { ImageEditorExportDialog } from "@/components/image-editor/export-dialog";
+
+<ImageEditorExportDialog onSave={async ({ blob }) => upload(blob)} />
+```
+
+## Props
+
+| Prop | Type | Description |
+| --- | --- | --- |
+| `trigger` | `ReactNode` | The button that opens it. Default: an Export button. |
+| `defaultFormat` | `"png" \| "jpeg" \| "webp"` | Default `"png"`. |
+| `onSave` | `(result) => Promise<void>` | Adds a Save button, e.g. to upload the image. |
+| `saveLabel` | `string` | Label for the Save button. |
+| `hideDownload` | `boolean` | Hide the Download button. |
+| `open / onOpenChange` | `boolean` | Control whether it's open. |

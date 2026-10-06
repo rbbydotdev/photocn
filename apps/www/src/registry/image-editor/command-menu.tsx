@@ -14,6 +14,7 @@ import { useImageEditor } from "photocn/react";
 import { editorToolbarDefaultTools } from "./toolbar";
 
 import {
+  Command,
   CommandDialog,
   CommandEmpty,
   CommandGroup,
@@ -68,37 +69,39 @@ export function EditorCommandDialog({
       open={open}
       title={title}
     >
-      <CommandInput placeholder={placeholder} />
-      <CommandList>
-        <CommandEmpty>{emptyLabel}</CommandEmpty>
-        {groups.map((group, groupIndex) => (
-          <CommandGroup
-            heading={group.heading}
-            key={group.heading ?? `group-${groupIndex}`}
-          >
-            {group.items.map((item) => {
-              const Icon = item.icon;
-
-              return (
-                <CommandItem
-                  disabled={item.disabled}
-                  key={item.value}
-                  keywords={item.keywords}
-                  onSelect={(value) => item.onSelect?.(value)}
-                  value={item.value}
-                >
-                  {Icon ? <Icon aria-hidden="true" /> : null}
-                  <span>{item.label}</span>
-                  {item.shortcut ? (
-                    <CommandShortcut>{item.shortcut}</CommandShortcut>
-                  ) : null}
-                </CommandItem>
-              );
-            })}
-            {groupIndex < groups.length - 1 ? <CommandSeparator /> : null}
-          </CommandGroup>
-        ))}
-      </CommandList>
+      <Command>
+        <CommandInput placeholder={placeholder} />
+        <CommandList>
+          <CommandEmpty>{emptyLabel}</CommandEmpty>
+          {groups.map((group, groupIndex) => (
+            <CommandGroup
+              heading={group.heading}
+              key={group.heading ?? `group-${groupIndex}`}
+            >
+              {group.items.map((item) => {
+                const Icon = item.icon;
+  
+                return (
+                  <CommandItem
+                    disabled={item.disabled}
+                    key={item.value}
+                    keywords={item.keywords}
+                    onSelect={(value) => item.onSelect?.(value)}
+                    value={item.value}
+                  >
+                    {Icon ? <Icon aria-hidden="true" /> : null}
+                    <span>{item.label}</span>
+                    {item.shortcut ? (
+                      <CommandShortcut>{item.shortcut}</CommandShortcut>
+                    ) : null}
+                  </CommandItem>
+                );
+              })}
+              {groupIndex < groups.length - 1 ? <CommandSeparator /> : null}
+            </CommandGroup>
+          ))}
+        </CommandList>
+      </Command>
     </CommandDialog>
   );
 }

@@ -1,0 +1,34 @@
+---
+title: "Toolbar"
+description: "The tool switcher, plus undo, redo, open, reset and compare buttons."
+section: "Components"
+order: 21
+item: "image-editor-toolbar"
+---
+<ComponentPreview name="toolbar-demo" />
+
+## Installation
+
+<InstallCommand item="image-editor-toolbar" />
+
+## Usage
+
+```tsx
+import {
+  ImageEditorToolbar,
+  ImageEditorUndoButton,
+  ImageEditorRedoButton,
+} from "@/components/image-editor/toolbar";
+
+<ImageEditorUndoButton />
+<ImageEditorRedoButton />
+<ImageEditorToolbar tools={myTools} />
+```
+
+## Props
+
+| Prop | Type | Description |
+| --- | --- | --- |
+| `ImageEditorToolbar · tools` | `EditorToolbarTool[]` | The tools to show. Default: all of them. |
+| `ImageEditorToolbar · actions` | `EditorToolbarAction[]` | Extra icon buttons. |
+| `Undo / Redo / Open / Reset / Compare · showLabel` | `boolean` | Show the text label next to the icon. |

@@ -1,0 +1,30 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "editor-minimal",
+  "title": "Minimal editor",
+  "description": "Adjust, filters and crop, plus export. Nothing else.",
+  "dependencies": [
+    "lucide-react",
+    "photocn@^0.1.0"
+  ],
+  "registryDependencies": [
+    "https://photocn.dev/r/image-editor-adjustments.json",
+    "https://photocn.dev/r/image-editor-canvas.json",
+    "https://photocn.dev/r/image-editor-crop.json",
+    "https://photocn.dev/r/image-editor-export.json",
+    "https://photocn.dev/r/image-editor-filters.json",
+    "https://photocn.dev/r/image-editor-toolbar.json"
+  ],
+  "files": [
+    {
+      "path": "src/registry/blocks/editor-minimal.tsx",
+      "content": "\"use client\";\n\nimport { CropIcon, SlidersHorizontalIcon, WandSparklesIcon } from \"lucide-react\";\nimport { ImageEditorProvider, useImageEditor } from \"photocn/react\";\n\nimport { ImageEditorAdjustments } from \"@/components/image-editor/adjustments-panel\";\nimport { ImageEditorCanvas } from \"@/components/image-editor/canvas\";\nimport { ImageEditorCrop } from \"@/components/image-editor/crop-panel\";\nimport { ImageEditorExportDialog } from \"@/components/image-editor/export-dialog\";\nimport { ImageEditorFilters } from \"@/components/image-editor/filters-panel\";\nimport { ImageEditorRedoButton, ImageEditorUndoButton } from \"@/components/image-editor/toolbar\";\nimport { cn } from \"@/lib/utils\";\n\nconst tabs = [\n  { value: \"adjust\", label: \"Adjust\", icon: SlidersHorizontalIcon },\n  { value: \"filters\", label: \"Filters\", icon: WandSparklesIcon },\n  { value: \"compose\", label: \"Crop\", icon: CropIcon },\n] as const;\n\n/** Three tools and export: the smallest useful editor. */\nexport function EditorMinimalBlock({ src }: { src?: string | File | Blob }) {\n  return (\n    <ImageEditorProvider src={src}>\n      <div className=\"flex h-dvh flex-col bg-background\">\n        <header className=\"flex items-center gap-1 border-b px-2 py-2\">\n          <ImageEditorUndoButton />\n          <ImageEditorRedoButton />\n          <Tabs />\n          <div className=\"ml-auto\">\n            <ImageEditorExportDialog />\n          </div>\n        </header>\n        <div className=\"grid min-h-0 flex-1 grid-rows-[1fr_auto] md:grid-cols-[1fr_320px] md:grid-rows-1\">\n          <ImageEditorCanvas className=\"min-h-0 p-2\" />\n          <aside className=\"max-h-[45dvh] overflow-y-auto border-t md:max-h-none md:border-t-0 md:border-l\">\n            <Panel />\n          </aside>\n        </div>\n      </div>\n    </ImageEditorProvider>\n  );\n}\n\nfunction Tabs() {\n  const editor = useImageEditor();\n  return (\n    <nav aria-label=\"Tools\" className=\"mx-auto flex rounded-lg bg-muted p-0.5\">\n      {tabs.map((tab) => (\n        <button\n          aria-pressed={editor.tool === tab.value}\n          className={cn(\n            \"flex min-h-9 items-center gap-1.5 rounded-md px-3 text-sm text-muted-foreground transition-colors\",\n            editor.tool === tab.value && \"bg-background text-foreground shadow-sm\",\n          )}\n          key={tab.value}\n          onClick={() => editor.setTool(tab.value)}\n          type=\"button\"\n        >\n          <tab.icon className=\"size-4\" />\n          <span className=\"hidden sm:inline\">{tab.label}</span>\n        </button>\n      ))}\n    </nav>\n  );\n}\n\nfunction Panel() {\n  const { tool } = useImageEditor();\n  if (tool === \"filters\") return <ImageEditorFilters />;\n  if (tool === \"compose\") return <ImageEditorCrop />;\n  return <ImageEditorAdjustments />;\n}\n",
+      "type": "registry:component",
+      "target": "components/blocks/editor-minimal.tsx"
+    }
+  ],
+  "categories": [
+    "blocks"
+  ],
+  "type": "registry:block"
+}

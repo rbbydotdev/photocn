@@ -1,0 +1,34 @@
+---
+title: "Canvas"
+description: "Shows the photo. In the crop tool it shows the crop frame, and everywhere else the edited result."
+section: "Components"
+order: 20
+item: "image-editor-canvas"
+---
+<ComponentPreview name="canvas-demo" />
+
+## Installation
+
+<InstallCommand item="image-editor-canvas" />
+
+## Usage
+
+```tsx
+import { ImageEditorCanvas } from "@/components/image-editor/canvas";
+
+<ImageEditorProvider src="/photo.jpg">
+  <ImageEditorCanvas className="h-96" />
+</ImageEditorProvider>
+```
+
+## Props
+
+| Prop | Type | Description |
+| --- | --- | --- |
+| `className` | `string` | Classes for the outer element. |
+| `alt` | `string` | Accessible name for the image. |
+| `allowDrop` | `boolean` | Open images dropped onto it. Default `true`. |
+| `showOpenButton` | `boolean` | Show the Open button when there's no image. Default `true`. |
+| `emptyState` | `ReactNode` | What to show before an image is loaded. |
+| `padding` | `number` | Space around the photo in px. Default 24. |
+| `children` | `ReactNode` | Your own layers, drawn over the photo. |

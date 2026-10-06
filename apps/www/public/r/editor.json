@@ -1,0 +1,25 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "editor",
+  "title": "Editor",
+  "description": "The full editor, filling the screen, with a ⌘K command menu.",
+  "dependencies": [
+    "photocn@^0.1.0"
+  ],
+  "registryDependencies": [
+    "https://photocn.dev/r/image-editor-command-menu.json",
+    "https://photocn.dev/r/image-editor.json"
+  ],
+  "files": [
+    {
+      "path": "src/registry/blocks/editor.tsx",
+      "content": "\"use client\";\n\nimport type { ImageEditorExportResult } from \"photocn/react\";\n\nimport { ImageEditorCommandMenu } from \"@/components/image-editor/command-menu\";\nimport { ImageEditor } from \"@/components/image-editor/image-editor\";\n\nexport interface EditorBlockProps {\n  /** Image to open. Without it, the editor shows an \"Open image\" button. */\n  src?: string | File | Blob;\n  /** Adds a Save button to the export panel. */\n  onSave?: (result: ImageEditorExportResult) => void | Promise<void>;\n}\n\n/** The full editor, filling the screen, with a ⌘K command menu. */\nexport function EditorBlock({ src, onSave }: EditorBlockProps) {\n  return (\n    <ImageEditor className=\"h-dvh min-h-0\" onSave={onSave} src={src}>\n      <ImageEditorCommandMenu />\n    </ImageEditor>\n  );\n}\n",
+      "type": "registry:component",
+      "target": "components/blocks/editor.tsx"
+    }
+  ],
+  "categories": [
+    "blocks"
+  ],
+  "type": "registry:block"
+}

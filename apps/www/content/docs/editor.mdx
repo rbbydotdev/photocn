@@ -1,0 +1,38 @@
+---
+title: "The full editor"
+description: "One component with every tool. Use it as is, or trim it down."
+section: "Guides"
+order: 10
+item: "image-editor"
+---
+<ComponentPreview name="full-editor" />
+
+## Installation
+
+<InstallCommand item="image-editor" />
+
+## Choose the tools
+
+`tools` sets which tools appear. `panels` replaces a built-in panel or adds a panel for your own tool. Custom panels use `useImageEditor()`, just like the built-in ones.
+
+<ComponentPreview name="custom-tools" />
+
+## On phones
+
+When the editor is narrower than 640px, it switches to a phone layout: the tools move to a bar at the bottom, and each tool's controls open in a sheet. Set `layout="compact"` or `layout="desktop"` to choose a layout yourself. See [Compact layout](/docs/compact-layout).
+
+## Props
+
+`ImageEditor` takes every [option](/docs/api) of `useImageEditorState`, plus:
+
+| Prop | Type | Description |
+| --- | --- | --- |
+| `editor` | `ImageEditorApi` | An editor you created with `useImageEditorState()`. |
+| `tools` | `EditorToolbarTool[]` | The tools to show. Default: all of them. |
+| `panels` | `Record<toolId, ReactNode>` | Replace a panel or add your own. |
+| `layout` | `"auto" \| "desktop" \| "compact"` | Default `"auto"`: compact below 640px. |
+| `showOpenButton` | `boolean` | Show the Open button. Default `true`. |
+| `showRecipes` | `boolean` | Show the save/load look buttons. Default `true`. |
+| `showHistogram` | `boolean` | Show the histogram. Default `true`. |
+| `toolbarExtra` | `ReactNode` | Extra buttons, placed before Export. |
+| `onSave` | `(result) => void` | Adds a Save button to the export panel, e.g. to upload the result. |

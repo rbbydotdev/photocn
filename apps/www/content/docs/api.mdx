@@ -1,0 +1,64 @@
+---
+title: "API Reference"
+description: "The useImageEditor hook that every component is built on."
+section: "Basics"
+order: 3
+---
+```tsx
+import {
+  ImageEditorProvider, // creates the editor, or shares one you pass in
+  useImageEditor,      // reads the nearest provider
+  useImageEditorState, // creates an editor without a provider
+} from "photocn/react";
+```
+
+## Options
+
+`useImageEditorState`, `<ImageEditorProvider>` and `<ImageEditor>` all take these options.
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `src` | `string \| File \| Blob \| ArrayBuffer \| HTMLImageElement` | The image to edit. |
+| `defaultParams` | `EditorParams` | Edits to start with, e.g. a saved session. Older formats are converted. |
+| `onParamsChange` | `(params) => void` | Called after every edit. |
+| `tool` / `defaultTool` / `onToolChange` | `string` | The active tool. Default `"adjust"`. |
+| `onImageLoad` / `onImageError` | `(result) / (error) => void` | Image loading events. |
+| `onExport` | `(result) => void` | Called after each export. |
+| `disabled` | `boolean` | Turn off all editing. |
+| `filterPresets` | `FilterPreset[]` | Replace the built-in filters. |
+| `aspectRatioOptions` | `{ value, label }[]` | Crop ratio choices, e.g. `{ value: "3:2", label: "3:2" }`. |
+| `renderMode` | `"worker" \| "main"` | Where rendering happens. Defaults to a worker when the browser supports it. |
+| `spawnWorker` | `() => Worker` | Start the render worker yourself, for strict CSPs. |
+| `keyboardShortcuts` | `boolean` | Undo/redo and crop shortcuts. Default `true`. |
+| `historyLimit` / `commitDelay` | `number` | Undo depth (100), and how long (ms) a slider drag counts as one step (400). |
+
+## What it returns
+
+| Field | Description |
+| --- | --- |
+| `status`, `isReady`, `isLoading`, `hasImage`, `error` | Loading state. |
+| `params`, `setParams`, `patch` | The current edits. `patch(section, values, { transient })` groups slider drags into one undo step. |
+| `history` | `undo`, `redo`, `canUndo`, `canRedo`. |
+| `tool`, `setTool` | The active tool. |
+| `openFile()`, `load(src)` | Open a file picker, or load an image from code. |
+| `adjust` | Light, color and effects. |
+| `filters` | `presets`, `select(preset \| label \| null)`, `setStrength(0..1)`. |
+| `curves`, `blur`, `blend` | Each tool's values and setters. |
+| `geometry` | Crop, straighten, perspective, rotate and flip. See [Crop & transform](/docs/crop-and-transform). |
+| `compare` | `active`, `setActive`: show the original. |
+| `recipes` | `current` (the look as JSON) and `apply(recipe)`. |
+| `histogram` | `data` and a `canvasRef` it draws into. |
+| `exportImage(options)`, `download(options)` | Encode at full size, or at `width`/`height`. Options: `format` (`png`, `jpeg`, `webp`) and `quality`. |
+| `canvasRef`, `canvasKey`, `stageRef`, `rootRef` | Attach these to your canvas, its container and the editor's outer element. Use `canvasKey` as the canvas's `key`. |
+| `engine`, `worker` | Lower-level access to the renderer and worker. |
+
+## Custom filters
+
+```tsx
+import { createLutPreset, filterPresets } from "photocn/filters";
+
+// A 33×1089 3D LUT image, the same format as the built-in filters.
+const presets = [...filterPresets, createLutPreset("teal-orange", "/luts/teal-orange.png")];
+
+<ImageEditor src={src} filterPresets={presets} />;
+```

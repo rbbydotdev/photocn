@@ -1,0 +1,28 @@
+---
+title: "Command Menu"
+description: "Press ⌘K to search tools, undo, redo and filters."
+section: "Components"
+order: 32
+item: "image-editor-command-menu"
+---
+<ComponentPreview name="command-menu-demo" />
+
+## Installation
+
+<InstallCommand item="image-editor-command-menu" />
+
+## Usage
+
+```tsx
+import { ImageEditorCommandMenu } from "@/components/image-editor/command-menu";
+
+<ImageEditorCommandMenu />
+```
+
+## Props
+
+| Prop | Type | Description |
+| --- | --- | --- |
+| `shortcut` | `boolean` | Open it with ⌘K / Ctrl+K. Default `true`. |
+| `groups` | `EditorCommandGroup[]` | Your own commands, added after the built-in ones. |
+| `open / onOpenChange` | `boolean` | Control whether it's open. |

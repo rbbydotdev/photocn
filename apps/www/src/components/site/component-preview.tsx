@@ -1,9 +1,12 @@
+import { highlight } from "@/lib/highlight";
 import { readExampleSource } from "@/lib/source";
 
-import { CodeBlock } from "./code-block";
-import { PreviewTabs } from "./preview-tabs";
+import { PreviewCard } from "./preview-card";
 
 export async function ComponentPreview({ name }: { name: string }) {
   const source = await readExampleSource(name);
-  return <PreviewTabs code={<CodeBlock code={source} />} name={name} />;
+  const html = await highlight(source, "tsx");
+  return (
+    <PreviewCard code={<div dangerouslySetInnerHTML={{ __html: html }} />} name={name} source={source} />
+  );
 }

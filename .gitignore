@@ -8,3 +8,6 @@ out
 next-env.d.ts
 .wrangler
 .dev.vars
+.content-collections
+test-results
+playwright-report

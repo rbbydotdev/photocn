@@ -1,0 +1,26 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "batch-looks",
+  "title": "Batch looks",
+  "description": "Choose one look and apply it to many photos at once.",
+  "dependencies": [
+    "lucide-react",
+    "photocn@^0.1.0"
+  ],
+  "registryDependencies": [
+    "button",
+    "slider"
+  ],
+  "files": [
+    {
+      "path": "src/registry/blocks/batch-looks.tsx",
+      "content": "\"use client\";\n\nimport { useEffect, useState } from \"react\";\nimport { DownloadIcon } from \"lucide-react\";\nimport { buildRecipe, createEditorParams, type RecipeV1 } from \"photocn\";\nimport { filterPresets } from \"photocn/filters\";\nimport { useImageEditorState } from \"photocn/react\";\n\nimport { Button } from \"@/components/ui/button\";\nimport { Slider } from \"@/components/ui/slider\";\nimport { cn } from \"@/lib/utils\";\n\nexport interface BatchLooksProps {\n  /** Photos to edit together. */\n  photos: string[];\n  className?: string;\n}\n\n/** Pick one look and apply it to every photo at once. */\nexport function BatchLooks({ photos, className }: BatchLooksProps) {\n  const [filter, setFilter] = useState<string | null>(\"crema\");\n  const [exposure, setExposure] = useState(0.1);\n\n  // One recipe, shared by every photo.\n  const recipe: RecipeV1 = (() => {\n    const params = createEditorParams();\n    params.lights.exposure = exposure;\n    const built = buildRecipe(params) ?? { version: 1 as const };\n    return filter ? { ...built, filters: { label: filter } } : built;\n  })();\n\n  return (\n    <div className={cn(\"flex flex-col gap-4\", className)}>\n      <div className=\"grid grid-cols-2 gap-2 sm:grid-cols-4\">\n        {photos.map((photo) => (\n          <BatchPhoto key={photo} recipe={recipe} src={photo} />\n        ))}\n      </div>\n      <div className=\"flex flex-col gap-3 sm:flex-row sm:items-center\">\n        <div className=\"flex flex-1 gap-1.5 overflow-x-auto [scrollbar-width:none]\">\n          {[null, ...filterPresets.map((preset) => preset.label)].map((label) => (\n            <Button\n              className=\"shrink-0 capitalize\"\n              key={label ?? \"none\"}\n              onClick={() => setFilter(label)}\n              size=\"sm\"\n              variant={filter === label ? \"default\" : \"outline\"}\n            >\n              {label ?? \"None\"}\n            </Button>\n          ))}\n        </div>\n        <label className=\"flex items-center gap-3 text-sm sm:w-56\">\n          Exposure\n          <Slider max={100} min={-100} onValueChange={([v]) => setExposure((v ?? 0) / 100)} value={[exposure * 100]} />\n        </label>\n      </div>\n    </div>\n  );\n}\n\nfunction BatchPhoto({ src, recipe }: { src: string; recipe: RecipeV1 }) {\n  const editor = useImageEditorState({ src, keyboardShortcuts: false });\n  const key = JSON.stringify(recipe);\n  useEffect(() => {\n    if (editor.isReady) void editor.recipes.apply(JSON.parse(key) as RecipeV1);\n    // Re-apply when the look changes or the photo becomes ready.\n    // eslint-disable-next-line react-hooks/exhaustive-deps\n  }, [key, editor.isReady]);\n  return (\n    <div className=\"group relative aspect-square overflow-hidden rounded-lg bg-muted\" ref={editor.rootRef}>\n      <div className=\"absolute inset-0\" ref={editor.stageRef}>\n        {editor.imageSrc ? (\n          <canvas className=\"absolute inset-0 size-full object-cover\" key={editor.canvasKey} ref={editor.canvasRef} />\n        ) : null}\n      </div>\n      <Button\n        aria-label=\"Download\"\n        className=\"absolute right-2 bottom-2 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100\"\n        disabled={!editor.isReady}\n        onClick={() => void editor.download({ format: \"jpeg\" })}\n        size=\"icon-sm\"\n        variant=\"secondary\"\n      >\n        <DownloadIcon />\n      </Button>\n    </div>\n  );\n}\n",
+      "type": "registry:component",
+      "target": "components/blocks/batch-looks.tsx"
+    }
+  ],
+  "categories": [
+    "blocks"
+  ],
+  "type": "registry:block"
+}

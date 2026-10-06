@@ -1,0 +1,27 @@
+---
+title: "Filters"
+description: "13 filter presets with a strength slider. 0% is the original photo."
+section: "Components"
+order: 23
+item: "image-editor-filters"
+---
+<ComponentPreview name="filters-demo" />
+
+## Installation
+
+<InstallCommand item="image-editor-filters" />
+
+## Usage
+
+```tsx
+import { ImageEditorFilters } from "@/components/image-editor/filters-panel";
+
+<ImageEditorFilters />
+```
+
+## Props
+
+| Prop | Type | Description |
+| --- | --- | --- |
+| `options` | `FilterPreset[]` | The filters to show. Default: the editor's presets. |
+| `disabled` | `boolean` | Turn off the panel. |

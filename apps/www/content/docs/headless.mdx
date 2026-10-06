@@ -1,0 +1,13 @@
+---
+title: "Headless"
+description: "Use the editor with your own UI and no photocn components."
+section: "Guides"
+order: 12
+---
+`useImageEditorState()` from `photocn/react` returns the same API the components use. Put `canvasRef` (with `key={canvasKey}`) on a `<canvas>` and `stageRef` on its container, and build any UI you like. To share it with child components, pass it to `<ImageEditorProvider editor={editor}>`.
+
+<ComponentPreview name="headless" />
+
+## Lower level
+
+`photocn/hooks` has the building blocks: `useMiniPhotoEditor`, `useEditorHistory`, `useHistogram` and `useExifMetadata`. The core modules (`photocn`, `photocn/gl`, `photocn/exif`) work without React.

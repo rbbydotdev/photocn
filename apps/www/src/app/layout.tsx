@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import { ThemeProvider } from "@/components/site/theme-provider";
-import { TooltipProvider } from "@/components/ui/tooltip";
 
 import "./globals.css";
 
@@ -34,7 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body className="min-h-dvh bg-background font-sans text-foreground">
         <ThemeProvider>
-          <TooltipProvider>{children}</TooltipProvider>
+          {children}
         </ThemeProvider>
       </body>
     </html>
