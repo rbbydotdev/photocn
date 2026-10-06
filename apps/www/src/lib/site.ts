@@ -1,9 +1,9 @@
 /** Public URL the registry is served from (also used in install commands). */
 export const siteUrl = (
-  process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://photocn.dev"
 ).replace(/\/$/, "");
 
-export const githubUrl = "https://github.com/your-org/photocn";
+export const githubUrl = "https://github.com/rbbydotdev/photocn";
 
 export const registryItemUrl = (name: string) => `${siteUrl}/r/${name}.json`;
 

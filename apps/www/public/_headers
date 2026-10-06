@@ -1,0 +1,11 @@
+/r/*
+  Access-Control-Allow-Origin: *
+  Cache-Control: public, max-age=300
+
+/llms.txt
+  Access-Control-Allow-Origin: *
+  Content-Type: text/markdown; charset=utf-8
+
+/*.md
+  Access-Control-Allow-Origin: *
+  Content-Type: text/markdown; charset=utf-8

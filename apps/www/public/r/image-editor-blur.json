@@ -9,7 +9,7 @@
   ],
   "registryDependencies": [
     "field",
-    "http://localhost:3000/r/image-editor-panel-header.json",
+    "https://photocn.dev/r/image-editor-panel-header.json",
     "separator",
     "slider",
     "tabs",

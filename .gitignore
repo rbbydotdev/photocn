@@ -6,3 +6,5 @@ out
 .DS_Store
 .env*.local
 next-env.d.ts
+.wrangler
+.dev.vars

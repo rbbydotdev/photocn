@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "photocn",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "./out",
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    "html_handling": "auto-trailing-slash",
+    // The worker only needs to see docs requests (markdown negotiation).
+    "run_worker_first": ["/docs", "/docs/*"]
+  },
+  "routes": [
+    { "pattern": "photocn.dev", "custom_domain": true },
+    { "pattern": "www.photocn.dev", "custom_domain": true }
+  ],
+  "observability": { "enabled": true }
+}

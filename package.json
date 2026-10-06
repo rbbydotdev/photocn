@@ -7,7 +7,8 @@
     "build": "pnpm --filter photocn build && pnpm --filter www build",
     "build:registry": "pnpm --filter www registry:build",
     "test": "pnpm --filter photocn test",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm -r typecheck",
+    "deploy": "pnpm --filter photocn build && NEXT_PUBLIC_SITE_URL=https://photocn.dev pnpm --filter www run deploy"
   },
   "devDependencies": {
     "playwright": "1.59.1"

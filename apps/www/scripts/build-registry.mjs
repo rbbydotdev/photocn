@@ -12,7 +12,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
-const REGISTRY_URL = (process.env.REGISTRY_URL ?? "http://localhost:3000").replace(/\/$/, "");
+const REGISTRY_URL = (process.env.REGISTRY_URL ?? "https://photocn.dev").replace(/\/$/, "");
 const DIR = "src/registry/image-editor";
 const photocnVersion = JSON.parse(
   readFileSync(path.join(root, "../../packages/photocn/package.json"), "utf8"),

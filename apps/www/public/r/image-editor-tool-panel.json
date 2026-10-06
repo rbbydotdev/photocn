@@ -7,13 +7,13 @@
     "photocn@^0.1.0"
   ],
   "registryDependencies": [
-    "http://localhost:3000/r/image-editor-adjustments.json",
-    "http://localhost:3000/r/image-editor-blend.json",
-    "http://localhost:3000/r/image-editor-blur.json",
-    "http://localhost:3000/r/image-editor-crop.json",
-    "http://localhost:3000/r/image-editor-curves.json",
-    "http://localhost:3000/r/image-editor-filters.json",
-    "http://localhost:3000/r/image-editor-metadata.json"
+    "https://photocn.dev/r/image-editor-adjustments.json",
+    "https://photocn.dev/r/image-editor-blend.json",
+    "https://photocn.dev/r/image-editor-blur.json",
+    "https://photocn.dev/r/image-editor-crop.json",
+    "https://photocn.dev/r/image-editor-curves.json",
+    "https://photocn.dev/r/image-editor-filters.json",
+    "https://photocn.dev/r/image-editor-metadata.json"
   ],
   "files": [
     {

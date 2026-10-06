@@ -9,13 +9,13 @@
   ],
   "registryDependencies": [
     "badge",
-    "http://localhost:3000/r/image-editor-canvas.json",
-    "http://localhost:3000/r/image-editor-export.json",
-    "http://localhost:3000/r/image-editor-histogram.json",
-    "http://localhost:3000/r/image-editor-layout.json",
-    "http://localhost:3000/r/image-editor-recipes.json",
-    "http://localhost:3000/r/image-editor-tool-panel.json",
-    "http://localhost:3000/r/image-editor-toolbar.json",
+    "https://photocn.dev/r/image-editor-canvas.json",
+    "https://photocn.dev/r/image-editor-export.json",
+    "https://photocn.dev/r/image-editor-histogram.json",
+    "https://photocn.dev/r/image-editor-layout.json",
+    "https://photocn.dev/r/image-editor-recipes.json",
+    "https://photocn.dev/r/image-editor-tool-panel.json",
+    "https://photocn.dev/r/image-editor-toolbar.json",
     "tooltip"
   ],
   "files": [

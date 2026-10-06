@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "registry:build": "REGISTRY_URL=${NEXT_PUBLIC_SITE_URL:-http://localhost:3000} node scripts/build-registry.mjs"
+    "registry:build": "REGISTRY_URL=${NEXT_PUBLIC_SITE_URL:-https://photocn.dev} node scripts/build-registry.mjs",
+    "deploy": "pnpm build && wrangler deploy",
+    "preview": "pnpm build && wrangler dev"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",
@@ -36,7 +38,8 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.6",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wrangler": "^4.147.0"
   },
   "packageManager": "pnpm@10.33.3"
 }
