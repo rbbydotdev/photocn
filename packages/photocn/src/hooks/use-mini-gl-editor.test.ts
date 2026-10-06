@@ -585,3 +585,31 @@ describe("exclusive canvases (worker renderers)", () => {
     expect(createEditor).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("canvas element changes", () => {
+  it("moves the renderer to a new <canvas> when the element is swapped (layout change)", async () => {
+    const createEditor = vi.fn(async () => createStubEditor()) as unknown as CreateMiniGlEditor<
+      MiniGlRenderer,
+      StubEditor
+    >;
+    const image = createStubImage();
+    const { result } = renderHook(() => useMiniGlEditor({ image, createEditor }));
+    const first = document.createElement("canvas");
+    await act(async () => {
+      result.current.canvasRef.current = first;
+    });
+    await waitFor(() => expect(result.current.status).toBe("ready"));
+
+    // The layout re-renders the canvas somewhere else: unmount, then mount.
+    const second = document.createElement("canvas");
+    await act(async () => {
+      result.current.canvasRef.current = null;
+    });
+    await act(async () => {
+      result.current.canvasRef.current = second;
+    });
+    await waitFor(() => expect(result.current.status).toBe("ready"));
+    const canvases = vi.mocked(createEditor).mock.calls.map(([options]) => options.canvas);
+    expect(canvases).toEqual([first, second]);
+  });
+});

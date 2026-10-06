@@ -105,7 +105,22 @@ export function useMiniGlEditor<
       (createMiniGlEditor as unknown as CreateMiniGlEditor<TRenderer, TEditor, TImage>),
     [createEditor],
   );
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  // A ref object whose setter re-renders: when React swaps the <canvas>
+  // element (layout change, re-key) the effect below sees the new one.
+  const [canvasElement, setCanvasElement] = useState<HTMLCanvasElement | null>(null);
+  const canvasRef = useMemo<RefObject<HTMLCanvasElement | null>>(() => {
+    let element: HTMLCanvasElement | null = null;
+    return {
+      get current() {
+        return element;
+      },
+      set current(next: HTMLCanvasElement | null) {
+        if (next === element) return;
+        element = next;
+        setCanvasElement(next);
+      },
+    };
+  }, []);
   const onReadyRef = useLatestRef(onReady);
   const onErrorRef = useLatestRef(onError);
   const [editor, setEditor] = useState<TEditor | null>(null);
@@ -119,7 +134,7 @@ export function useMiniGlEditor<
   const rekeyedFromRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
+    const canvas = canvasElement;
     let disposed = false;
     let activeEditor: TEditor | null = null;
 
@@ -187,7 +202,7 @@ export function useMiniGlEditor<
       disposed = true;
       activeEditor?.dispose?.();
     };
-  }, [colorspace, editorFactory, image, canvasKey]);
+  }, [colorspace, editorFactory, image, canvasKey, canvasElement]);
 
   return {
     canvasRef,

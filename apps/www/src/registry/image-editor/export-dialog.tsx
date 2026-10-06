@@ -34,8 +34,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
+
+import { MOBILE_QUERY, useMediaQuery } from "./layout";
 
 export const exportFormats = [
   { value: "png", label: "PNG", lossy: false, defaultQuality: 1 },
@@ -94,6 +105,7 @@ export function ImageEditorExportDialog({
   const [error, setError] = useState<unknown>(null);
 
   const canExport = editor.isReady && !editor.disabled;
+  const isMobile = useMediaQuery(MOBILE_QUERY);
 
   const run = async (kind: "download" | "save") => {
     setError(null);
@@ -117,31 +129,15 @@ export function ImageEditorExportDialog({
     }
   };
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        {trigger ?? (
-          <Button
-            disabled={!editor.hasImage || editor.disabled}
-            size="sm"
-            type="button"
-          >
-            <DownloadIcon aria-hidden="true" data-icon="inline-start" />
-            Export
-          </Button>
-        )}
-      </DialogTrigger>
-      <DialogContent
-        className={cn("sm:max-w-md", className)}
-        data-slot="image-editor-export-dialog"
-      >
-        <DialogHeader>
-          <DialogTitle>Export image</DialogTitle>
-          <DialogDescription>
-            Pick a format and size. Rendering always starts from the original.
-          </DialogDescription>
-        </DialogHeader>
-
+  const title = "Export image";
+  const description = "Pick a format and size. Rendering always starts from the original.";
+  const triggerNode = trigger ?? (
+    <Button disabled={!editor.hasImage || editor.disabled} size="sm" type="button">
+      <DownloadIcon aria-hidden="true" data-icon="inline-start" />
+      Export
+    </Button>
+  );
+  const form = (
         <FieldGroup className="gap-4">
           <Field orientation="horizontal">
             <FieldLabel id={`${id}-format`}>Format</FieldLabel>
@@ -258,8 +254,9 @@ export function ImageEditorExportDialog({
             </Alert>
           ) : null}
         </FieldGroup>
-
-        <DialogFooter>
+  );
+  const actions = (
+    <>
           {hideDownload ? null : (
             <Button
               disabled={!canExport || pending !== null}
@@ -297,7 +294,40 @@ export function ImageEditorExportDialog({
               {saveLabel}
             </Button>
           ) : null}
-        </DialogFooter>
+    </>
+  );
+
+  // Phones get a bottom drawer; everything else a dialog (shadcn's
+  // responsive dialog pattern).
+  if (isMobile) {
+    return (
+      <Drawer onOpenChange={onOpenChange} open={open}>
+        <DrawerTrigger asChild>{triggerNode}</DrawerTrigger>
+        <DrawerContent className={className} data-slot="image-editor-export-dialog">
+          <DrawerHeader className="text-left">
+            <DrawerTitle>{title}</DrawerTitle>
+            <DrawerDescription>{description}</DrawerDescription>
+          </DrawerHeader>
+          <div className="px-4">{form}</div>
+          <DrawerFooter className="pb-[max(1rem,env(safe-area-inset-bottom))]">{actions}</DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogTrigger asChild>{triggerNode}</DialogTrigger>
+      <DialogContent
+        className={cn("sm:max-w-md", className)}
+        data-slot="image-editor-export-dialog"
+      >
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
+        </DialogHeader>
+        {form}
+        <DialogFooter>{actions}</DialogFooter>
       </DialogContent>
     </Dialog>
   );

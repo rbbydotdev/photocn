@@ -143,7 +143,8 @@ function constrain<T>(candidate: (t: number) => T, valid: (value: T) => boolean)
 
 type Drag =
   | { kind: "resize"; handle: Handle; pointerId: number; start: Vec2; rect: NormalizedRect; view: StageView }
-  | { kind: "pan"; pointerId: number; start: Vec2; rect: NormalizedRect; view: StageView };
+  | { kind: "pan"; pointerId: number; start: Vec2; rect: NormalizedRect; view: StageView }
+  | { kind: "pinch"; pointerId: number; distance: number; rect: NormalizedRect; view: StageView };
 
 export interface CropFrameOverlayProps {
   geometry: ImageEditorGeometryApi;
@@ -165,6 +166,8 @@ export function CropFrameOverlay({ geometry, view, stage, disabled, onFreezeView
   const oriented = geometry.orientedSize;
   const polygon = geometry.polygon;
   const drag = useRef<Drag | null>(null);
+  // Fingers currently down inside the frame (two = pinch to zoom).
+  const pointers = useRef(new Map<number, Vec2>());
   const rootRef = useRef<HTMLDivElement | null>(null);
   const escRef = useRef<((event: KeyboardEvent) => void) | null>(null);
   const wheelRef = useRef<(event: WheelEvent) => void>(() => {});
@@ -211,10 +214,40 @@ export function CropFrameOverlay({ geometry, view, stage, disabled, onFreezeView
       inside,
     );
 
+  /** Scale the crop about its center (factor > 1 = zoom out), limited to the image. */
+  const zoomBy = (rect: NormalizedRect, factor: number, k: number) => {
+    const cx = rect.x + rect.width / 2;
+    const cy = rect.y + rect.height / 2;
+    const minW = MIN_CROP_PX / k / oriented.width;
+    const width = Math.max(minW, rect.width * factor);
+    const height = (rect.height * width) / rect.width;
+    const next: NormalizedRect = { x: cx - width / 2, y: cy - height / 2, width, height };
+    return inside(next) ? next : fitRectInPolygon(next, polygon, oriented);
+  };
+
+  const distance = () => {
+    const [a, b] = [...pointers.current.values()];
+    return a && b ? Math.hypot(a[0] - b[0], a[1] - b[1]) : 0;
+  };
+
   const begin = (event: PointerEvent<HTMLElement>, handle: Handle | null) => {
     if (disabled || (event.pointerType === "mouse" && event.button !== 0)) return;
     event.stopPropagation();
     event.currentTarget.setPointerCapture(event.pointerId);
+    if (!handle) {
+      pointers.current.set(event.pointerId, [event.clientX, event.clientY]);
+      if (pointers.current.size === 2) {
+        // Second finger: switch the move into a pinch.
+        drag.current = {
+          kind: "pinch",
+          pointerId: event.pointerId,
+          distance: distance(),
+          rect: geometry.crop,
+          view,
+        };
+        return;
+      }
+    }
     const common = {
       pointerId: event.pointerId,
       start: [event.clientX, event.clientY] as Vec2,
@@ -244,7 +277,15 @@ export function CropFrameOverlay({ geometry, view, stage, disabled, onFreezeView
   };
 
   const move = (event: PointerEvent<HTMLElement>) => {
+    if (pointers.current.has(event.pointerId)) {
+      pointers.current.set(event.pointerId, [event.clientX, event.clientY]);
+    }
     const d = drag.current;
+    if (d?.kind === "pinch") {
+      const now = distance();
+      if (now > 0) geometry.setCrop(zoomBy(d.rect, d.distance / now, d.view.k), { transient: true });
+      return;
+    }
     if (!d || d.pointerId !== event.pointerId) return;
     const dx = event.clientX - d.start[0];
     const dy = event.clientY - d.start[1];
@@ -256,7 +297,15 @@ export function CropFrameOverlay({ geometry, view, stage, disabled, onFreezeView
   };
 
   const end = (event: PointerEvent<HTMLElement>) => {
+    const wasPointer = pointers.current.delete(event.pointerId);
     const d = drag.current;
+    if (d?.kind === "pinch" && wasPointer) {
+      // Lifting either finger ends the pinch.
+      drag.current = null;
+      pointers.current.clear();
+      geometry.commit();
+      return;
+    }
     if (!d || d.pointerId !== event.pointerId) return;
     drag.current = null;
     stopEsc();
@@ -267,16 +316,9 @@ export function CropFrameOverlay({ geometry, view, stage, disabled, onFreezeView
   wheelRef.current = (event: WheelEvent) => {
     if (disabled) return;
     event.preventDefault();
-    const factor = Math.exp(event.deltaY * 0.002);
-    const rect = geometry.crop;
-    const cx = rect.x + rect.width / 2;
-    const cy = rect.y + rect.height / 2;
-    const minW = MIN_CROP_PX / view.k / oriented.width;
-    const width = Math.max(minW, rect.width * factor);
-    const height = (rect.height * width) / rect.width;
-    let next: NormalizedRect = { x: cx - width / 2, y: cy - height / 2, width, height };
-    if (!inside(next)) next = fitRectInPolygon(next, polygon, oriented);
-    geometry.setCrop(next, { transient: true });
+    geometry.setCrop(zoomBy(geometry.crop, Math.exp(event.deltaY * 0.002), view.k), {
+      transient: true,
+    });
   };
 
   const onHandleKey = (handle: Handle) => (event: ReactKeyboardEvent<HTMLButtonElement>) => {
@@ -323,7 +365,7 @@ export function CropFrameOverlay({ geometry, view, stage, disabled, onFreezeView
           <button
             aria-label={handle.label}
             className={cn(
-              "absolute z-10 flex size-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full outline-none touch-none focus-visible:ring-2 focus-visible:ring-ring",
+              "absolute z-10 flex size-7 pointer-coarse:size-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full outline-none touch-none focus-visible:ring-2 focus-visible:ring-ring",
               handle.className,
             )}
             disabled={disabled}
@@ -414,7 +456,7 @@ export function CornerHandlesOverlay({ geometry, view, stage, disabled, onFreeze
       {points.map((point, index) => (
         <button
           aria-label={`Move ${CORNER_LABELS[index]} corner`}
-          className="absolute flex size-9 -translate-x-1/2 -translate-y-1/2 cursor-grab items-center justify-center rounded-full outline-none touch-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing"
+          className="absolute flex size-9 pointer-coarse:size-12 -translate-x-1/2 -translate-y-1/2 cursor-grab items-center justify-center rounded-full outline-none touch-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing"
           disabled={disabled}
           key={CORNER_LABELS[index]}
           onPointerCancel={end}

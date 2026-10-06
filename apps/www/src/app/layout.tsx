@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import { ThemeProvider } from "@/components/site/theme-provider";
@@ -16,6 +16,13 @@ export const metadata: Metadata = {
   },
   description:
     "A GPU photo editor you install with the shadcn CLI. Use the whole editor, or compose its pieces like Lego.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  // Let the editor use the full screen on notched phones (safe-area insets).
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

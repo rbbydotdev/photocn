@@ -25,7 +25,14 @@ import { cn } from "@/lib/utils";
 import { ImageEditorCanvas } from "./canvas";
 import { ImageEditorExportDialog } from "./export-dialog";
 import { ImageEditorHistogram } from "./histogram";
-import { ImageEditorLayout } from "./layout";
+import { ImageEditorCompactLayout } from "./compact-layout";
+import {
+  COMPACT_WIDTH,
+  ImageEditorLayout,
+  MOBILE_QUERY,
+  useElementWidth,
+  useMediaQuery,
+} from "./layout";
 import { ImageEditorRecipes } from "./recipes";
 import { ImageEditorToolPanel } from "./tool-panel";
 import {
@@ -55,6 +62,11 @@ export interface ImageEditorProps extends UseImageEditorStateOptions {
   showHistogram?: boolean;
   /** Extra toolbar content, rendered before the Export button. */
   toolbarExtra?: ReactNode;
+  /**
+   * "auto" (default) switches to the phone layout (bottom tools + drawer)
+   * when the editor itself is narrower than 640px.
+   */
+  layout?: "auto" | "desktop" | "compact";
   /** Extra content under the active tool panel. */
   sidebarExtra?: ReactNode;
   /** Adds a "Save" button to the export dialog (e.g. upload the result). */
@@ -84,6 +96,7 @@ function OwnedImageEditor(props: Omit<ImageEditorProps, "editor">) {
     toolbarExtra: _toolbarExtra,
     sidebarExtra: _sidebarExtra,
     onSave: _onSave,
+    layout: _layout,
     children: _children,
     ...options
   } = props;
@@ -102,16 +115,32 @@ function ImageEditorView({
   toolbarExtra,
   sidebarExtra,
   onSave,
+  layout = "auto",
   children,
 }: ImageEditorProps & { editor: ImageEditorApi }) {
+  const width = useElementWidth(editor.rootRef);
+  const isMobile = useMediaQuery(MOBILE_QUERY);
+  const compact =
+    layout === "compact" || (layout === "auto" && (width > 0 ? width < COMPACT_WIDTH : isMobile));
   return (
     <ImageEditorProvider editor={editor}>
       <TooltipProvider>
         <div
-          className={cn("h-full min-h-[640px] w-full", className)}
+          className={cn("@container/editor h-full min-h-[560px] w-full", className)}
+          data-layout={compact ? "compact" : "desktop"}
           data-slot="image-editor"
           ref={editor.rootRef}
         >
+          {compact ? (
+            <ImageEditorCompactLayout
+              onSave={onSave}
+              panels={panels}
+              showOpenButton={showOpenButton}
+              showRecipes={showRecipes}
+              toolbarExtra={toolbarExtra}
+              tools={tools}
+            />
+          ) : (
           <ImageEditorLayout
             className="h-full"
             sidebar={
@@ -145,6 +174,7 @@ function ImageEditorView({
           >
             <ImageEditorCanvas showOpenButton={showOpenButton} />
           </ImageEditorLayout>
+          )}
           {children}
         </div>
       </TooltipProvider>

@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode, type RefObject } from "react";
 
 import {
   ResizableHandle,
@@ -122,3 +122,35 @@ export function ImageEditorLayout({
     </div>
   );
 }
+
+/** Width of an element, tracked with a ResizeObserver (0 until measured). */
+export function useElementWidth(ref: RefObject<HTMLElement | null>): number {
+  const [width, setWidth] = useState(0);
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    const observer = new ResizeObserver(([entry]) => setWidth(entry.contentRect.width));
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [ref]);
+  return width;
+}
+
+/** `window.matchMedia(query).matches`, kept in sync (false during SSR). */
+export function useMediaQuery(query: string): boolean {
+  const [matches, setMatches] = useState(false);
+  useEffect(() => {
+    const list = window.matchMedia(query);
+    setMatches(list.matches);
+    const onChange = () => setMatches(list.matches);
+    list.addEventListener("change", onChange);
+    return () => list.removeEventListener("change", onChange);
+  }, [query]);
+  return matches;
+}
+
+/** Phones and small tablets: panels go in a bottom drawer. */
+export const MOBILE_QUERY = "(max-width: 767px)";
+/** Below this editor width the compact (mobile) layout is used. */
+export const COMPACT_WIDTH = 640;
+

@@ -22,6 +22,7 @@ const photocnVersion = JSON.parse(
 const ITEMS = [
   ["image-editor", "Image Editor", "The complete photo editor: toolbar, canvas, tool switcher, histogram and every panel. Drop it in and go.", ["image-editor.tsx"], "registry:block"],
   ["image-editor-layout", "Layout", "Resizable canvas + sidebar shell with an optional top toolbar.", ["layout.tsx"]],
+  ["image-editor-compact-layout", "Compact Layout", "Phone layout: canvas first, a bottom tool bar, and panels in a bottom sheet that keeps the photo touchable.", ["compact-layout.tsx"]],
   ["image-editor-canvas", "Canvas", "The image stage: crop frame and perspective corners in the crop tool; zoom, blur focus, drag-and-drop and hold-to-compare everywhere else.", ["canvas.tsx", "crop-overlay.tsx", "blur-center-overlay.tsx"]],
   ["image-editor-toolbar", "Toolbar", "Tool switcher plus undo, redo, open, reset and compare buttons.", ["toolbar.tsx"]],
   ["image-editor-histogram", "Histogram", "Live RGB histogram of the rendered image.", ["histogram.tsx"]],

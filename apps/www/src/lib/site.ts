@@ -7,6 +7,12 @@ export const githubUrl = "https://github.com/rbbydotdev/photocn";
 
 export const registryItemUrl = (name: string) => `${siteUrl}/r/${name}.json`;
 
+export const mainNav = [
+  { title: "Docs", href: "/docs" },
+  { title: "Components", href: "/docs/components" },
+  { title: "API", href: "/docs/api" },
+] as const;
+
 export const docsNav = [
   {
     title: "Getting started",

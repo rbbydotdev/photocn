@@ -15,6 +15,7 @@
       "registryDependencies": [
         "badge",
         "https://photocn.dev/r/image-editor-canvas.json",
+        "https://photocn.dev/r/image-editor-compact-layout.json",
         "https://photocn.dev/r/image-editor-export.json",
         "https://photocn.dev/r/image-editor-histogram.json",
         "https://photocn.dev/r/image-editor-layout.json",
@@ -48,6 +49,35 @@
           "path": "src/registry/image-editor/layout.tsx",
           "type": "registry:component",
           "target": "components/image-editor/layout.tsx"
+        }
+      ],
+      "categories": [
+        "image-editor"
+      ]
+    },
+    {
+      "name": "image-editor-compact-layout",
+      "type": "registry:component",
+      "title": "Compact Layout",
+      "description": "Phone layout: canvas first, a bottom tool bar, and panels in a bottom sheet that keeps the photo touchable.",
+      "dependencies": [
+        "lucide-react",
+        "photocn@^0.1.0"
+      ],
+      "registryDependencies": [
+        "button",
+        "dropdown-menu",
+        "https://photocn.dev/r/image-editor-canvas.json",
+        "https://photocn.dev/r/image-editor-export.json",
+        "https://photocn.dev/r/image-editor-layout.json",
+        "https://photocn.dev/r/image-editor-tool-panel.json",
+        "https://photocn.dev/r/image-editor-toolbar.json"
+      ],
+      "files": [
+        {
+          "path": "src/registry/image-editor/compact-layout.tsx",
+          "type": "registry:component",
+          "target": "components/image-editor/compact-layout.tsx"
         }
       ],
       "categories": [
@@ -395,7 +425,9 @@
         "alert",
         "button",
         "dialog",
+        "drawer",
         "field",
+        "https://photocn.dev/r/image-editor-layout.json",
         "input",
         "select",
         "slider"
