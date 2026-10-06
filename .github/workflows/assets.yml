@@ -1,0 +1,45 @@
+name: Refresh images
+
+# Re-captures the README/site screenshots and GIFs from the real UI and
+# re-renders the Takumi banner + OG images, then opens a PR if they changed.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "apps/www/src/registry/**"
+      - "apps/www/src/og/**"
+      - "apps/www/src/components/home/**"
+      - "packages/photocn/src/**"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  assets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter photocn build
+      - run: pnpm --filter www build
+      - run: pnpm --filter www exec playwright install --with-deps chromium
+      - run: pnpm --filter www assets
+      - uses: peter-evans/create-pull-request@v7
+        with:
+          branch: chore/refresh-images
+          commit-message: "Refresh screenshots, GIFs, banner and OG images"
+          title: "Refresh screenshots, GIFs, banner and OG images"
+          body: "Automated by `.github/workflows/assets.yml` (`pnpm --filter www assets`)."
+          add-paths: |
+            apps/www/public/assets/**
+            apps/www/public/banner.png
+            apps/www/public/og.png
+            apps/www/public/og/**

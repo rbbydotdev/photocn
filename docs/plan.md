@@ -56,7 +56,7 @@ The layout keys off the editor's own width (`@container`), not the viewport, so 
 **Copy:** short, technical, no jargon.
 
 - **Proposed:**
-  - H1: **"Photo editing, made simple"**
+  - H1: **"The photo editor for shadcn/ui"** (updated from "Photo editing, made simple")
   - Sub: "Ready-to-use, customizable photo editor components for React. Built on WebGL. Styled with Tailwind."
   - CTAs: **Get Started** · **View Components**, then a small ghost button: **Copy prompt for your agent**.
   - Footer blurb: "Free & open-source photo editor components for React."
@@ -130,7 +130,7 @@ Then submit `@photocn` to shadcn's registry directory, so `npx shadcn add @photo
   - then Takumi renders the banner and OG images from the fresh screenshots.
 
   Re-run it whenever the branding, copy or UI changes.
-- **Demo photos:** keep curated, free-licensed photos (currently Unsplash via picsum) with a `CREDITS.md`, or swap in your own.
+- **Demo photos:** Unsplash (via picsum), credited in `CREDITS.md`.
 
 ## Phase 6: README + launch
 
@@ -146,7 +146,7 @@ Then submit `@photocn` to shadcn's registry directory, so `npx shadcn add @photo
 
 ## Decisions needed
 
-1. Hero copy: go with "Photo editing, made simple" (above), or alternatives?
+1. Hero copy: decided: "The photo editor for shadcn/ui".
 2. OK to create **public** `github.com/rbbydotdev/photocn` and push now?
 3. Is GitHub Sponsors enabled for rbbydotdev (for the footer and FUNDING.yml)?
 4. Hosting: static export + a small Worker (recommended) vs OpenNext?

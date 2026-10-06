@@ -33,7 +33,7 @@ export const blockDemos: Record<string, ComponentType> = {
   ),
   "filter-picker": () => (
     <div className="flex justify-center p-6">
-      <FilterPicker className="w-full" src="/samples/dog.jpg" />
+      <FilterPicker className="w-full" src="/samples/strawberries.jpg" />
     </div>
   ),
   "before-after": () => (

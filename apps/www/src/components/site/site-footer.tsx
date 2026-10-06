@@ -42,7 +42,7 @@ export function SiteFooter() {
             <Logo /> photocn
           </Link>
           <p className="max-w-xs text-sm text-muted-foreground">
-            Free &amp; open-source photo editor components for React.
+            The photo editor for shadcn/ui. Free &amp; open source.
           </p>
           <div className="flex gap-3 text-muted-foreground">
             <a aria-label="GitHub" className="hover:text-foreground" href={githubUrl} rel="noreferrer" target="_blank">

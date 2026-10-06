@@ -33,6 +33,8 @@ async function toMarkdown(title: string, description: string, body: string) {
         .join(" ") +
       "\n```",
   );
+  // Videos → a link to the clip.
+  out = out.replace(/<video[^>]*src="([^"]+)"[^>]*\/>/g, (_, src: string) => `[Video](${src})`);
   // Any other component tags are presentation only.
   out = out.replace(/^<\/?[A-Z][^>]*>\s*$/gm, "");
   return `# ${title}\n\n> ${description}\n\n${out.trim()}\n`.replaceAll("](/", `](${SITE}/`);

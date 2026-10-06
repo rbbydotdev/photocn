@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 
 import { ThemeProvider } from "@/components/site/theme-provider";
 
+import { siteUrl } from "@/lib/site";
+
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-sans", subsets: ["latin"] });
@@ -10,11 +12,19 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 
 export const metadata: Metadata = {
   title: {
-    default: "photocn — a photo editor for shadcn/ui",
-    template: "%s · photocn",
+    default: "photocn - The photo editor for shadcn/ui",
+    template: "%s - photocn",
   },
   description:
-    "A GPU photo editor you install with the shadcn CLI. Use the whole editor, or compose its pieces like Lego.",
+    "The photo editor for shadcn/ui. Typed React components on a WebGL engine: add the whole editor with one command, or compose your own.",
+  metadataBase: new URL(siteUrl),
+  authors: [{ name: "rbbydotdev", url: "https://github.com/rbbydotdev" }],
+  openGraph: {
+    type: "website",
+    siteName: "photocn",
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "photocn: the photo editor for shadcn/ui" }],
+  },
+  twitter: { card: "summary_large_image", creator: "@rbbydotdev", images: ["/og.png"] },
 };
 
 export const viewport: Viewport = {
