@@ -53,7 +53,6 @@ photocn is built on the Base UI version of shadcn/ui (the default for new projec
 
 ```bash
 npx shadcn@latest init -b base
-npx shadcn@latest registry add @photocn=https://photocn.dev/r/{name}.json
 npx shadcn@latest add @photocn/image-editor
 ```
 

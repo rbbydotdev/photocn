@@ -49,7 +49,6 @@ const { blob } = await photo.export({ format: "jpeg", width: 1080 });
 Pre-styled components install through the shadcn registry:
 
 ```bash
-npx shadcn@latest registry add @photocn=https://photocn.dev/r/{name}.json
 npx shadcn@latest add @photocn/image-editor
 ```
 

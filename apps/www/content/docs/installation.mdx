@@ -14,31 +14,15 @@ npx shadcn@latest init -b base
 
 Already have a project? Check that the `style` in your `components.json` starts with `base-` (for example `base-nova`).
 
-## 2. Add the photocn registry
-
-Run this once per project. It tells the shadcn CLI where `@photocn/...` components live:
-
-```bash
-npx shadcn@latest registry add @photocn=https://photocn.dev/r/{name}.json
-```
-
-This adds the following to your `components.json`:
-
-```json
-{
-  "registries": {
-    "@photocn": "https://photocn.dev/r/{name}.json"
-  }
-}
-```
-
-## 3. Add the editor
+## 2. Add the editor
 
 <InstallCommand item="image-editor" />
 
+`@photocn` is listed in the [shadcn registry directory](https://ui.shadcn.com/docs/directory), so the CLI finds it with no setup.
+
 This installs the `photocn` package, the shadcn/ui components the editor needs, and the editor files in `components/image-editor/`.
 
-## 4. Use it
+## 3. Use it
 
 ```tsx
 import { ImageEditor } from "@/components/image-editor/image-editor";

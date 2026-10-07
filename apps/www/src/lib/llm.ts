@@ -27,7 +27,6 @@ Registry: ${siteUrl}/r/registry.json (items at ${siteUrl}/r/{name}.json)
 
 \`\`\`bash
 npx shadcn@latest init -b base
-npx shadcn@latest registry add @photocn=${siteUrl}/r/{name}.json
 ${install("image-editor")}
 \`\`\`
 
