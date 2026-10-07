@@ -33,7 +33,7 @@ jobs:
       - name: Tag matches the package version
         run: test "v$(node -p 'require("./packages/photocn/package.json").version')" = "$GITHUB_REF_NAME"
       - run: pnpm --filter photocn build
-      - run: pnpm typecheck
+      - run: pnpm --filter photocn typecheck
       - run: pnpm test
       - run: npm publish --access public
         working-directory: packages/photocn
