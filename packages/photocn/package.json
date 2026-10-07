@@ -1,6 +1,6 @@
 {
   "name": "photocn",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "GPU photo editor engine for React: adjustments, curves, LUT filters, crop, perspective, blur, EXIF-aware export. Pairs with the photocn shadcn/ui registry.",
   "license": "MIT",
   "type": "module",
